@@ -15,6 +15,9 @@ requests = "^2.28.2"
 ipython = "^8.11.0"
 ipdb = "^0.13.11"
 jupyterthemes = "^0.20.0"
+django = "^4.1.7"
+django-solo = "^2.0.0"
+django-extensions = "^3.2.1"
 
 
 [build-system]
