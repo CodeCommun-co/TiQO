@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../../Odoo/.idea/Odoo.iml" filepath="$PROJECT_DIR$/../../Odoo/.idea/Odoo.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/QontoOdooDjango.iml" filepath="$PROJECT_DIR$/.idea/QontoOdooDjango.iml" />
     </modules>
   </component>
