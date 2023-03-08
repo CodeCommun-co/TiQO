@@ -8,12 +8,18 @@ from solo.models import SingletonModel
 
 class Configuration(SingletonModel):
     qonto_login = models.CharField(max_length=100)
-    qonto_api = models.CharField(max_length=100)
+    qonto_apikey = models.CharField(max_length=100)
+
+    odoo_url = models.URLField()
+    odoo_login = models.CharField(max_length=100)
+    odoo_apikey = models.CharField(max_length=100)
+    odoo_dbname = models.CharField(max_length=100)
 
 
-class Account(models.Model):
+class AccountJournal(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
     name = models.CharField(max_length=100)
+    id_odoo = models.SmallIntegerField()
 
     def __str__(self):
         return self.name

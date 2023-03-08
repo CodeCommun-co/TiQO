@@ -8,7 +8,10 @@ class QontoApi():
     def __init__(self):
         config = Configuration.get_solo()
         self.login = config.qonto_login
-        self.api_key = config.qonto_api
+        self.api_key = config.qonto_apikey
+
+        if not any([self.login, self.api_key]):
+            raise Exception("No Qonto credentials. Set its in the admin panel.")
 
     def _get_request_api(self, url):
         url = f"https://thirdparty.qonto.com/v2/{url}"

@@ -1,10 +1,22 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from solo.admin import SingletonModelAdmin
-from .models import Configuration, Account, Category, Label, Contact, Transaction
+from .models import Configuration, AccountJournal, Category, Label, Contact, Transaction
+from .odoo_api import OdooApi
+
 
 # Register your models here.
 class ConfigurationAdmin(SingletonModelAdmin):
-    pass
+    def save_model(self, request, obj, form, change):
+        obj: Configuration
+        odoo_api = OdooApi()
+        test_result = odoo_api.test_config()
+        if test_result == True:
+            messages.add_message(request, messages.INFO, f"Configuration ODOO {test_result}")
+        else:
+            messages.add_message(request, messages.ERROR, f"Odoo error : {test_result}")
+
+        super().save_model(request, obj, form, change)
+
 admin.site.register(Configuration, ConfigurationAdmin)
 
 
