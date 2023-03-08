@@ -1,0 +1,26 @@
+<div>
+    {{ message }}
+</div>
+<div>
+    <form action="/" method="post">
+        {% csrf_token %}
+        <input id="get_labels" style="display: None" name="button_action" value="get_labels">
+        <input type="submit" value="Refresh Labels from Qonto">
+    </form>
+    <h1>Table des tags Qonto, classée par parents/enfants</h1>
+    <table>
+        <tr>
+            <th>Parent</th>
+            <th>Label</th>
+        </tr>
+
+        {% for parent, childs in labels.items %}
+            {% for child in childs %}
+                <tr>
+                    <td>{{ parent.name }}</td>
+                    <td>{{ child.name }}</td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+    </table>
+</div>

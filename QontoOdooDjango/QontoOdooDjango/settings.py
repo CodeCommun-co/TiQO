@@ -38,8 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'qonto_parser',
-    'softui_dashboard',
+    'tiqo_parser',
+    'front',
     'django_extensions',
     'solo',
 ]

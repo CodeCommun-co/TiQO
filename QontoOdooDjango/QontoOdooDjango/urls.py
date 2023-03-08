@@ -17,6 +17,6 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('', include('qonto_parser.urls')),
+    path('', include('tiqo_parser.urls')),
     path('admin/', admin.site.urls),
 ]

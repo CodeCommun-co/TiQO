@@ -8,9 +8,12 @@ class ConfigurationAdmin(SingletonModelAdmin):
 admin.site.register(Configuration, ConfigurationAdmin)
 
 
-admin.site.register(Account)
-admin.site.register(Category)
-admin.site.register(Label)
-admin.site.register(Contact)
-admin.site.register(Transaction)
+class LabelADmin(admin.ModelAdmin):
+    list_display = (
+        'parent',
+        'name',
+    )
+    ordering = ('parent__name', 'name')
+
+admin.site.register(Label, LabelADmin)
 

@@ -1,16 +1,15 @@
 from django.shortcuts import render, redirect
 from django.views import View
-from qonto_parser.models import Configuration, Label
+from tiqo_parser.models import Configuration, Label
 import requests
-from qonto_parser.qonto_api import QontoApi
+from tiqo_parser.qonto_api import QontoApi
 
-from qonto_parser.serializers import LabelsSerializer
-
-
-# Create your views here.
+from tiqo_parser.serializers import LabelsSerializer
 
 
-
+# Technique de sioux qui me permet de ne pas faire une class par bouton ...
+# En gros, si le formulaire renvoie un inpoute avec name="button_action" value="get_labels"
+# alors je lance la fonction get_labels() de la class QontoApi
 def button_action(action):
     ACTIONS_POSSIBLE = [
         "get_labels",
@@ -19,6 +18,7 @@ def button_action(action):
         qontoApi = QontoApi()
         return getattr(qontoApi, action)()
 
+
 class index(View):
 
     def get(self, request):
@@ -26,7 +26,7 @@ class index(View):
 
         context = {
             "labels" : labels,
-            "message": "Hello, world. View",
+            "message": "Hello, world.",
         }
         return render(request, 'index.html', context=context)
 
@@ -36,6 +36,5 @@ class index(View):
             if input == "button_action":
                 result = button_action(value)
                 print(f'result {result}')
-
 
         return redirect('index')

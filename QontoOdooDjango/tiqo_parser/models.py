@@ -30,11 +30,11 @@ class Category(models.Model):
 class Label(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
     name = models.CharField(max_length=100)
-    parent_id = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
-        if self.parent_id:
-            return f"{self.parent_id.name} > {self.name}"
+        if self.parent:
+            return f"{self.parent.name} > {self.name}"
         return self.name
 
 

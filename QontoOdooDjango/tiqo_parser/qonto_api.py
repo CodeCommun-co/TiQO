@@ -1,7 +1,7 @@
 from django.contrib.sites import requests
 import requests
-from qonto_parser.models import Configuration, Label
-from qonto_parser.serializers import LabelsSerializer
+from tiqo_parser.models import Configuration, Label
+from tiqo_parser.serializers import LabelsSerializer
 
 
 class QontoApi():
@@ -47,7 +47,7 @@ class QontoApi():
             )
 
             label_parent = Label.objects.get(uuid=label.get('parent_id'))
-            labeldb.parent_id = label_parent
+            labeldb.parent = label_parent
             labeldb.save()
 
         return LabelsSerializer(Label.objects.all())
