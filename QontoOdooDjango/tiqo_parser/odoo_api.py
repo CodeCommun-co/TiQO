@@ -4,7 +4,7 @@ import json
 
 from django.contrib.sites import requests
 import requests
-from tiqo_parser.models import Configuration, Label, AccountJournal
+from tiqo_parser.models import Configuration, Label, AccountJournal, AccountAnalyticGroup, AccountAnalyticAccount
 from tiqo_parser.serializers import LabelsSerializer
 
 import logging
@@ -87,6 +87,44 @@ class OdooApi():
                 )
             return AccountJournal.objects.all()
 
-            # AccountJournal
+        raise Exception(f"Odoo server OFFLINE or BAD KEY : {response}")
 
-        return response
+    def get_account_analytic(self):
+        url = f"{self.url}tibillet-api/xmlrpc/account_analytic"
+
+        headers = {
+            'content-type': 'application/json'
+        }
+
+        data = json.dumps({
+            "params": self.params
+        }, cls=DecimalEncoder)
+
+        session = requests.session()
+        response = session.post(url, data=data, headers=headers)
+        session.close()
+
+
+        if response.status_code == 200:
+            resp_json = response.json()
+            accounts = resp_json.get('result')
+            for account in accounts:
+                # On gère d'abord les groupes
+                group = None
+                if account.get('group_id'):
+                    group, created = AccountAnalyticGroup.objects.get_or_create(
+                        id_odoo=account.get('group_id')[0],
+                        name=account.get('group_id')[1],
+                    )
+
+                # On gère ensuite les comptes analytiques
+                account, created = AccountAnalyticAccount.objects.get_or_create(
+                    id_odoo=account.get('id'),
+                    name=account.get('name'),
+                    code=account.get('code'),
+                    group=group,
+                )
+
+            return AccountAnalyticAccount.objects.all()
+
+        raise Exception(f"Odoo server OFFLINE or BAD KEY : {response}")

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.views import View
-from tiqo_parser.models import Configuration, Label, AccountJournal
+from tiqo_parser.models import Configuration, Label, AccountJournal, AccountAnalyticAccount
 import requests
 
 from tiqo_parser.odoo_api import OdooApi
@@ -29,6 +29,7 @@ def button_action_qonto(action):
 def button_action_odoo(action):
     ODOO_ACTIONS_POSSIBLE = [
         "get_account_journal",
+        "get_account_analytic",
     ]
     logger.info(f"button_action_odoo : {action}")
     if action in ODOO_ACTIONS_POSSIBLE:
@@ -41,10 +42,11 @@ class index(View):
     def get(self, request):
         labels = LabelsSerializer(Label.objects.all())
         account_journal = AccountJournal.objects.all()
-
+        account_analytic = AccountAnalyticAccount.objects.all().order_by('group__name')
         context = {
             "labels" : labels,
             "account_journal" : account_journal,
+            "account_analytic" : account_analytic,
             "message": "Hello, world.",
         }
         return render(request, 'index.html', context=context)

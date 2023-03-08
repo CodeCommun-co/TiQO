@@ -3,12 +3,12 @@
 </div>
 <div>
     <h2>Qonto</h2>
+    <h3>Table des tags Qonto, classée par parents/enfants</h3>
     <form action="/" method="post">
         {% csrf_token %}
         <input id="get_labels" style="display: None" name="button_action_qonto" value="get_labels">
-        <input type="submit" value="Get Labels from Qonto">
+        <input type="submit" value="Get Labels">
     </form>
-    <h3>Table des tags Qonto, classée par parents/enfants</h3>
     <table>
         <tr>
             <th>Parent</th>
@@ -29,12 +29,12 @@
 
 <div>
     <h2>Odoo</h2>
+    <h3>Table des account.journal Odoo</h3>
     <form action="/" method="post">
         {% csrf_token %}
         <input id="get_labels" style="display: None" name="button_action_odoo" value="get_account_journal">
-        <input type="submit" value="Get account.journal from Odoo">
+        <input type="submit" value="Get account.journal">
     </form>
-    <h3>Table des account.journal Odoo</h3>
     <table>
         <tr>
             <th>Journal</th>
@@ -43,6 +43,29 @@
         {% for journal in account_journal %}
             <tr>
                 <td>{{ journal.name }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+
+
+    <h3>Table des account.journal Odoo</h3>
+    <form action="/" method="post">
+        {% csrf_token %}
+        <input id="get_labels" style="display: None" name="button_action_odoo" value="get_account_analytic">
+        <input type="submit" value="Get account.analytic">
+    </form>
+    <table>
+        <tr>
+            <th>Groupe</th>
+            <th>Journal</th>
+            <th>Code</th>
+        </tr>
+
+        {% for account in account_analytic %}
+            <tr>
+                <td>{{ account.group.name }}</td>
+                <td>{{ account.name }}</td>
+                <td>{{ account.code }}</td>
             </tr>
         {% endfor %}
     </table>
