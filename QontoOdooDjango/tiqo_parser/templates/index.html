@@ -1,3 +1,11 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>TiQO</title>
+</head>
+<body>
+
 <div>
     {{ message }}
 </div>
@@ -11,9 +19,9 @@
     </form>
     <table>
         <tr>
-            <th>Parent</th>
+            <th>Parenst</th>
             <th>Label</th>
-            <th>Compte analytique Odoo</th>
+            <th>Compte aaanalytique Odoo</th>
             <th>Changez de compte</th>
         </tr>
 
@@ -30,7 +38,8 @@
                         <td>
 
                             <label for="odoo_account_select"> -> </label>
-                            <select name="odoo_account_select_{{ child.uuid }}" id="odoo_account_select_{{ child.uuid }}">
+                            <select name="odoo_account_select_{{ child.uuid }}"
+                                    id="odoo_account_select_{{ child.uuid }}">
                                 <option value="None">Changez de compte</option>
 
                                 {% for account in account_analytic %}
@@ -92,3 +101,7 @@
     </table>
 </div>
 
+
+{% load django_browser_reload %}
+</body>
+</html>

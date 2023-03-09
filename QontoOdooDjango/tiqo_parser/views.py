@@ -45,6 +45,7 @@ def button_action_odoo(action):
         odooApi = OdooApi()
         return getattr(odooApi, action)()
 
+
 def label_to_account_analytic(label_uuid, account_uuid):
     label_child_uuid = find_uuid_in_string(label_uuid)
     odoo_account_uuid = find_uuid_in_string(account_uuid)

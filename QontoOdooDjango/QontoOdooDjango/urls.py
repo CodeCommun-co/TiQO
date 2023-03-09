@@ -18,5 +18,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('', include('tiqo_parser.urls')),
+    path("__reload__/", include("django_browser_reload.urls")),
     path('admin/', admin.site.urls),
 ]
