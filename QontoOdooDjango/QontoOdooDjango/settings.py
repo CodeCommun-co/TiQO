@@ -130,3 +130,9 @@ MEDIA_URL = '/media/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SHELL_PLUS_IMPORTS = [
+    'from tiqo_parser.odoo_api import OdooApi',
+    'from tiqo_parser.qonto_api import QontoApi',
+    'import requests',
+]

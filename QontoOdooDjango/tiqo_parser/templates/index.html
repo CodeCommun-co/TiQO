@@ -13,16 +13,37 @@
         <tr>
             <th>Parent</th>
             <th>Label</th>
+            <th>Compte analytique Odoo</th>
+            <th>Changez de compte</th>
         </tr>
 
-        {% for parent, childs in labels.items %}
-            {% for child in childs %}
-                <tr>
-                    <td>{{ parent.name }}</td>
-                    <td>{{ child.name }}</td>
-                </tr>
+        <form action="/" method="post">
+            {% csrf_token %}
+
+            {% for parent, childs in labels.items %}
+                {% for child in childs %}
+
+                    <tr>
+                        <td>{{ parent.name }}</td>
+                        <td>{{ child.name }}</td>
+                        <td>{{ child.odoo_analytic_account }}</td>
+                        <td>
+
+                            <label for="odoo_account_select"> -> </label>
+                            <select name="odoo_account_select_{{ child.uuid }}" id="odoo_account_select_{{ child.uuid }}">
+                                <option value="None">Changez de compte</option>
+
+                                {% for account in account_analytic %}
+                                    <option value="{{ account.uuid }}">{{ account }}</option>
+                                {% endfor %}
+                            </select>
+
+                        </td>
+                    </tr>
+                {% endfor %}
             {% endfor %}
-        {% endfor %}
+            <input type="submit" value="MAJ">
+        </form>
     </table>
 </div>
 
@@ -70,3 +91,4 @@
         {% endfor %}
     </table>
 </div>
+

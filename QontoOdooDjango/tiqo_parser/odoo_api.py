@@ -25,12 +25,12 @@ class OdooApi():
         self.login = config.odoo_login
         self.api_key = config.odoo_apikey
         self.url = config.odoo_url
-        self.odoo_database = config.odoo_dbname
-        if not any([self.login, self.api_key]):
-            raise Exception("No Qonto credentials. Set its in the admin panel.")
+        self.odoo_dbname = config.odoo_dbname
+        if not any([self.login, self.api_key, self.url, self.odoo_dbname]):
+            raise Exception("Bad Odoo credentials. Set its in the admin panel.")
 
         self.params = {
-                "db": f"{self.odoo_database}",
+                "db": f"{self.odoo_dbname}",
                 "login": f"{self.login}",
                 "apikey": f"{self.api_key}",
             }
@@ -80,7 +80,7 @@ class OdooApi():
         if response.status_code == 200:
             resp_json = response.json()
             for name, id_odoo in resp_json.get('result').items():
-                print(f'{name} : {id_odoo}')
+                print(f'{str(name)} : {int(id_odoo)}')
                 AccountJournal.objects.get_or_create(
                     name=name,
                     id_odoo=id_odoo,
