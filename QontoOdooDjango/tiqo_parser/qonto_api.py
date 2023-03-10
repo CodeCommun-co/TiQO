@@ -6,7 +6,7 @@ import requests
 import pathlib, os, json
 from django.template.defaultfilters import slugify
 
-from tiqo_parser.models import Configuration, Label, Iban, Transaction, Category, Contact, Attachment
+from tiqo_parser.models import Configuration, Label, Iban, Transaction, Category, Contact, Attachment, ExternalTransfer
 from tiqo_parser.serializers import LabelsSerializer
 
 
@@ -47,31 +47,76 @@ class QontoApi():
 
         return Iban.objects.all()
 
-    def get_membership(self):
-        response_dict = self._get_request_api("memberships")
-        members = response_dict.get('memberships')
+    def get_contacts(self):
+        memberships_response_dict = self._get_request_api("memberships")
+        members = memberships_response_dict.get('memberships')
         for member in members:
             Contact.objects.get_or_create(
                 uuid=member.get('id'),
                 last_name=member.get('last_name'),
                 first_name=member.get('first_name'),
+                type="M",
             )
+
+        beneficiaries_response_dict = self._get_request_api("beneficiaries")
+        for beneficiary in beneficiaries_response_dict.get('beneficiaries'):
+            Contact.objects.get_or_create(
+                uuid=beneficiary.get('id'),
+                last_name=beneficiary.get('name'),
+                type="B",
+            )
+
         return Contact.objects.all()
 
-    def fetch_last100_transaction(self):
+    def get_all_external_transfers(self):
+        all_external_transfers = []
+        current_page = 1
+        while current_page is not None:
+            response_dict = self._get_request_api("external_transfers", params={
+                'page': current_page
+            })
+            all_external_transfers += response_dict.get('external_transfers')
+            current_page = response_dict.get('meta').get('next_page')
+            print(f"get_external_transfers next page : {current_page}")
+
+
+        for external_transfer in all_external_transfers:
+            if external_transfer.get('transaction_id'):
+                tr = Transaction.objects.filter(uuid=external_transfer.get('transaction_id'))
+                contact = Contact.objects.filter(uuid=external_transfer.get('beneficiary_id'))
+                if contact.exists() and tr.exists():
+                    ext, created = ExternalTransfer.objects.get_or_create(
+                        uuid=external_transfer.get('id'),
+                        transaction=tr.first(),
+                        reference=external_transfer.get('reference'),
+                        beneficiary=contact.first(),
+                    )
+                    print(f"ExternalTransfer {ext.reference} - created : {created}")
+
+        return ExternalTransfer.objects.all()
+
+    def fetch_all_transaction(self):
         # Mise à jour des IBAN
         ibans = self.get_ibans()
 
         transactions = {}
         # Qonto demande l'iban du compte pour récupérer les transactions
         for iban in ibans:
-            response_dict = self._get_request_api("transactions", params={"iban": iban.iban})
-            if response_dict:
-                transactions[iban] = response_dict.get('transactions')
+            transactions[iban] = []
+            current_page = 1
+            while current_page is not None:
+                response_dict = self._get_request_api("transactions", params={
+                    "iban": iban.iban,
+                    "page": current_page,
+                })
+                if response_dict:
+                    transactions[iban] += response_dict.get('transactions')
+                    current_page = response_dict.get('meta').get('next_page')
+                    print(f"fetch_all_transaction next page : {current_page}")
 
         return transactions
 
-    def download_attachment(self, uuid_attachment: str, db_transaction: Transaction):
+    def download_attachment(self, uuid_attachment: str, db_transaction: Transaction, download_file=False):
         # On va chercher l'attachment dans la base de données
         # Peut être qu'il existe déja
         if Attachment.objects.filter(uuid=uuid_attachment).exists():
@@ -79,7 +124,7 @@ class QontoApi():
             db_attachement.transactions.add(db_transaction)
             print(f"EXIST attachment uuid : {db_attachement.name}")
             return db_attachement
-        else :
+        else:
             response_dict = self._get_request_api(f"attachments/{uuid_attachment}")
             attachment = response_dict.get('attachment')
 
@@ -88,38 +133,41 @@ class QontoApi():
                 file_ext = file_content_type.partition('/')[-1]
                 file_name = f"{attachment['id']}.{file_ext}"
                 url = attachment.get('url')
+                full_path_file = None
 
-                fetch_file_url = requests.get(url)
-                print(f"fetch_file_url.status_code : {fetch_file_url.status_code}")
+                if download_file:
+                    fetch_file_url = requests.get(url)
+                    print(f"fetch_file_url.status_code : {fetch_file_url.status_code}")
 
-                if fetch_file_url.status_code == 200:
-                    path_media = f"{settings.MEDIA_ROOT}/" \
-                                 f"{slugify(db_transaction.iban.name)}/" \
-                                 f"{slugify(db_transaction.emitted_at.date())}/" \
-                                 f"{db_transaction.side}/" \
-                                 f"{db_transaction.uuid}/"
+                    if fetch_file_url.status_code == 200:
+                        path_media = f"{settings.MEDIA_ROOT}/" \
+                                     f"{slugify(db_transaction.iban.name)}/" \
+                                     f"{slugify(db_transaction.emitted_at.date())}/" \
+                                     f"{db_transaction.side}/" \
+                                     f"{db_transaction.uuid}/"
 
-                    path = pathlib.Path(path_media)
-                    pathlib.Path(f"{path_media}").mkdir(parents=True, exist_ok=True)
+                        path = pathlib.Path(path_media)
+                        pathlib.Path(f"{path_media}").mkdir(parents=True, exist_ok=True)
 
-                    full_path_file = f"{path}/{file_name}"
-                    with open(full_path_file, 'wb') as f:
-                        f.write(fetch_file_url.content)
+                        full_path_file = f"{path}/{file_name}"
+                        with open(full_path_file, 'wb') as f:
+                            f.write(fetch_file_url.content)
+                        print(f"NEW attachement downloaded : {full_path_file}")
 
-                    db_attachement, created = Attachment.objects.get_or_create(
-                        uuid=attachment['id'],
-                        filepath=full_path_file,
-                        name=attachment['file_name'],
-                    )
-                    db_attachement.transactions.add(db_transaction)
-                    print(f"NEW attachement downloaded : {db_attachement.name}")
-                    return db_attachement
+                db_attachement, created = Attachment.objects.get_or_create(
+                    uuid=attachment['id'],
+                    filepath=full_path_file,
+                    url_qonto=url,
+                    name=attachment['file_name'],
+                )
+                print(f"NEW attachement created : {db_attachement.name}")
 
-
+                db_attachement.transactions.add(db_transaction)
+                return db_attachement
 
     def get_transactions(self):
-        transactions = self.fetch_last100_transaction()
-        contacts = self.get_membership()
+        contacts = self.get_contacts()
+        transactions = self.fetch_all_transaction()
 
         for iban, transactions in transactions.items():
             for transaction in transactions:
@@ -159,6 +207,9 @@ class QontoApi():
                     tr_db.refresh_from_db()
                     for attachment_id in transaction.get('attachment_ids', []):
                         self.download_attachment(attachment_id, tr_db)
+
+        # On va chercher les external transfers liés aux transactions
+        external_transferts = self.get_all_external_transfers()
 
         return Transaction.objects.all()
 

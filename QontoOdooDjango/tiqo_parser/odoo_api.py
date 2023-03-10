@@ -11,12 +11,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class DecimalEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, decimal.Decimal):
             return str(o)
         return super(DecimalEncoder, self).default(o)
-
 
 
 class OdooApi():
@@ -30,10 +30,10 @@ class OdooApi():
             raise Exception("Bad Odoo credentials. Set its in the admin panel.")
 
         self.params = {
-                "db": f"{self.odoo_dbname}",
-                "login": f"{self.login}",
-                "apikey": f"{self.api_key}",
-            }
+            "db": f"{self.odoo_dbname}",
+            "login": f"{self.login}",
+            "apikey": f"{self.api_key}",
+        }
 
     def test_config(self):
         url = f"{self.url}tibillet-api/xmlrpc/login"
@@ -55,11 +55,53 @@ class OdooApi():
             status = resp_json.get('result').get('authentification')
             if status == True:
                 return status
-            else :
+            else:
                 logging.error(f"Odoo server OFFLINE or BAD KEY : {resp_json}")
                 return resp_json.get('result').get('error')
 
         return response
+
+    def gc_contact(self, email: str, name: str):
+        url = f"{self.url}tibillet-api/xmlrpc/gc_contact"
+        headers = {
+            'content-type': 'application/json'
+        }
+
+        # On ajoute les infos de membre au post DATA
+        self.params["membre"] = {
+            "name": f"{name.capitalize()}",
+            "email": f"{email}"
+        }
+
+        data = json.dumps({
+            "params": self.params,
+        }, cls=DecimalEncoder)
+
+        session = requests.session()
+        response = session.post(url, data=data, headers=headers)
+        session.close()
+        return response.json()
+
+    def create_draft_invoice(self, data: dict):
+        url = f"{self.url}tibillet-api/xmlrpc/create_draft_invoice"
+        headers = {
+            'content-type': 'application/json'
+        }
+
+        # On ajoute les infos de membre au post DATA
+        self.params["invoice_data"] = {'coucou': 'coucou'}
+
+        data = json.dumps({
+            "params": self.params,
+        }, cls=DecimalEncoder)
+
+        session = requests.session()
+        response = session.post(url, data=data, headers=headers)
+        session.close()
+        response_json = response.json()
+        print(response_json)
+
+        return response_json
 
     def get_account_journal(self):
         url = f"{self.url}tibillet-api/xmlrpc/account_journal"
@@ -75,7 +117,6 @@ class OdooApi():
         session = requests.session()
         response = session.post(url, data=data, headers=headers)
         session.close()
-
 
         if response.status_code == 200:
             resp_json = response.json()
@@ -103,7 +144,6 @@ class OdooApi():
         session = requests.session()
         response = session.post(url, data=data, headers=headers)
         session.close()
-
 
         if response.status_code == 200:
             resp_json = response.json()

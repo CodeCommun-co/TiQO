@@ -79,6 +79,7 @@ class Contact(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(blank=True, null=True)
+    type = models.CharField(choices=(('M', 'membership'), ('B', 'beneficiarie')), max_length=1)
 
     def __str__(self):
         if self.first_name and self.last_name:
@@ -117,13 +118,18 @@ class Transaction(models.Model):
 
     # attachment = models.FileField(upload_to='attachments', blank=True, null=True)
 
-
-### TABLES DE LIAISONS
+# Les transactions qui vont vers des comptes externes ( virements )
+class ExternalTransfer(models.Model):
+    transaction = models.OneToOneField(Transaction, on_delete=models.CASCADE, related_name='external_transfer')
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    beneficiary = models.ForeignKey(Contact, on_delete=models.CASCADE, null=True, blank=True)
+    reference = models.TextField(null=True, blank=True)
 
 class Attachment(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
     transactions = models.ManyToManyField(Transaction, related_name='attachments')
-    filepath = models.FilePathField(path=settings.MEDIA_ROOT, recursive=True, allow_folders=True, allow_files=True)
+    filepath = models.FilePathField(path=settings.MEDIA_ROOT, recursive=True, allow_folders=True, allow_files=True, blank=True, null=True)
+    url_qonto = models.URLField()
     name = models.CharField(max_length=100)
 
     def __str__(self):

@@ -119,6 +119,7 @@
                                 <th>amount_cents</th>
                                 <th>vat_amount_cents</th>
                                 <th>initiator_id</th>
+                                <th>attachment</th>
                             </tr>
 
                             {% for transaction in transaction_list %}
@@ -130,6 +131,11 @@
                                     <td>{{ transaction.amount_cents }}</td>
                                     <td>{{ transaction.vat_amount_cents }}</td>
                                     <td>{{ transaction.initiator_id }}</td>
+                                    <td>
+                                        {% for attachment in transaction.attachments.all %}
+                                            <a href="{{ attachment.url_qonto }}">A{{ forloop.counter }}</a>
+                                        {% endfor %}
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </table>
