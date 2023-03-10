@@ -1,6 +1,6 @@
 from django.contrib import admin, messages
 from solo.admin import SingletonModelAdmin
-from .models import Configuration, AccountJournal, Category, Label, Contact, Transaction, Iban
+from .models import Configuration, AccountJournal, Category, Label, Contact, Transaction, Iban, Attachment
 from .odoo_api import OdooApi
 
 
@@ -38,3 +38,4 @@ class LabelADmin(admin.ModelAdmin):
 
 admin.site.register(Label, LabelADmin)
 
+admin.site.register(Attachment)

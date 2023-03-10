@@ -1,4 +1,5 @@
 import uuid
+from django.conf import settings
 from django.db import models
 from solo.models import SingletonModel
 
@@ -58,6 +59,7 @@ class Iban(models.Model):
     def __str__(self):
         return self.name
 
+
 class Label(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
     name = models.CharField(max_length=100)
@@ -74,11 +76,14 @@ class Label(models.Model):
 
 class Contact(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
-    name = models.CharField(max_length=100)
-    email = models.EmailField()
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    email = models.EmailField(blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name[0].upper()}."
+        return self.first_name
 
 
 class Category(models.Model):
@@ -95,6 +100,7 @@ class Transaction(models.Model):
 
     iban = models.ForeignKey(Iban, on_delete=models.CASCADE)
     emitted_at = models.DateTimeField()
+    side = models.CharField(choices=(('D', 'debit'), ('C', 'credit')), max_length=1)
 
     status = models.CharField(max_length=100)
     amount_cents = models.IntegerField()
@@ -103,7 +109,7 @@ class Transaction(models.Model):
     label = models.CharField(max_length=100, null=True, blank=True)
     vat_amount_cents = models.IntegerField(default=0, null=True, blank=True)
 
-    initiator_id = models.UUIDField(null=True, blank=True)
+    initiator_id = models.ForeignKey(Contact, on_delete=models.CASCADE, null=True, blank=True)
     card_last_digits = models.CharField(max_length=4, null=True, blank=True)
 
     category = models.ForeignKey(Category, on_delete=models.CASCADE, blank=True, null=True)
@@ -111,4 +117,14 @@ class Transaction(models.Model):
 
     # attachment = models.FileField(upload_to='attachments', blank=True, null=True)
 
+
 ### TABLES DE LIAISONS
+
+class Attachment(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    transactions = models.ManyToManyField(Transaction, related_name='attachments')
+    filepath = models.FilePathField(path=settings.MEDIA_ROOT, recursive=True, allow_folders=True, allow_files=True)
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name

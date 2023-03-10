@@ -7,11 +7,12 @@ import re, uuid
 from tiqo_parser.odoo_api import OdooApi
 from tiqo_parser.qonto_api import QontoApi
 
-from tiqo_parser.serializers import LabelsSerializer
+from tiqo_parser.serializers import LabelsSerializer, TransactionsSerializer
 
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 # Fonction qui trouve si une uuid est dans une string :
 def find_uuid_in_string(string):
@@ -21,18 +22,19 @@ def find_uuid_in_string(string):
         return uuid.UUID(find[0])
     return None
 
+
 # Technique de sioux qui me permet de ne pas faire une class par bouton ...
 # En gros, si le formulaire renvoie un inpoute avec name="button_action" value="get_labels"
 # alors je lance la fonction get_labels() de la class QontoApi
 def button_action_qonto(action):
     QONTO_ACTIONS_POSSIBLE = [
         "get_labels",
+        "get_transactions",
     ]
     logger.info(f"button_action_qonto : {action}")
     if action in QONTO_ACTIONS_POSSIBLE:
         qontoApi = QontoApi()
         return getattr(qontoApi, action)()
-
 
 
 def button_action_odoo(action):
@@ -56,19 +58,20 @@ def label_to_account_analytic(label_uuid, account_uuid):
         label.save()
         print(f"Label {label} lié à {odoo_account}")
 
+
 class index(View):
 
     def get(self, request):
         labels = LabelsSerializer(Label.objects.all())
         account_journal = AccountJournal.objects.all()
         account_analytic = AccountAnalyticAccount.objects.all().order_by('group__name')
-        transactions = Transaction.objects.all()
+        alltransactions = TransactionsSerializer(Transaction.objects.all())
 
         context = {
             "labels": labels,
             "account_journal": account_journal,
             "account_analytic": account_analytic,
-            "transactions": transactions,
+            "alltransactions": alltransactions,
             "message": "Hello, world.",
         }
         return render(request, 'index.html', context=context)
@@ -87,6 +90,5 @@ class index(View):
                 print(f'result {result}')
             elif "odoo_account_select_" in input:
                 label_to_account_analytic(input, value)
-
 
         return redirect('index')

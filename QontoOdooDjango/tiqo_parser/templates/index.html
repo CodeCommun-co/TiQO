@@ -1,107 +1,145 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>TiQO</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block content %}
 
-<div>
-    {{ message }}
-</div>
-<div>
-    <h2>Qonto</h2>
-    <h3>Table des tags Qonto, classée par parents/enfants</h3>
-    <form action="/" method="post">
-        {% csrf_token %}
-        <input id="get_labels" style="display: None" name="button_action_qonto" value="get_labels">
-        <input type="submit" value="Get Labels">
-    </form>
-    <table>
-        <tr>
-            <th>Parent</th>
-            <th>Label</th>
-            <th>Compte analytique Odoo</th>
-            <th>Changez de compte</th>
-        </tr>
-
+    <div>
+        {{ message }}
+    </div>
+    <div>
+        <h2>Qonto</h2>
+        <h3>Table des tags Qonto, classée par parents/enfants</h3>
         <form action="/" method="post">
             {% csrf_token %}
-
-            {% for parent, childs in labels.items %}
-                {% for child in childs %}
-
-                    <tr>
-                        <td>{{ parent.name }}</td>
-                        <td>{{ child.name }}</td>
-                        <td>{{ child.odoo_analytic_account }}</td>
-                        <td>
-
-                            <label for="odoo_account_select"> -> </label>
-                            <select name="odoo_account_select_{{ child.uuid }}"
-                                    id="odoo_account_select_{{ child.uuid }}">
-                                <option value="None">Changez de compte</option>
-
-                                {% for account in account_analytic %}
-                                    <option value="{{ account.uuid }}">{{ account }}</option>
-                                {% endfor %}
-                            </select>
-
-                        </td>
-                    </tr>
-                {% endfor %}
-            {% endfor %}
-            <input type="submit" value="MAJ">
+            <input id="get_labels" style="display: None" name="button_action_qonto" value="get_labels">
+            <input type="submit" value="Get Labels">
         </form>
-    </table>
-</div>
-
-
-<div>
-    <h2>Odoo</h2>
-    <h3>Table des account.journal Odoo</h3>
-    <form action="/" method="post">
-        {% csrf_token %}
-        <input id="get_labels" style="display: None" name="button_action_odoo" value="get_account_journal">
-        <input type="submit" value="Get account.journal">
-    </form>
-    <table>
-        <tr>
-            <th>Journal</th>
-        </tr>
-
-        {% for journal in account_journal %}
+        <table>
             <tr>
-                <td>{{ journal.name }}</td>
+                <th>Parent</th>
+                <th>Label</th>
+                <th>Compte analytique Odoo</th>
+                <th>Changez de compte</th>
             </tr>
-        {% endfor %}
-    </table>
+
+            <form action="/" method="post">
+                {% csrf_token %}
+
+                {% for parent, childs in labels.items %}
+                    {% for child in childs %}
+
+                        <tr>
+                            <td>{{ parent.name }}</td>
+                            <td>{{ child.name }}</td>
+                            <td>{{ child.odoo_analytic_account }}</td>
+                            <td>
+
+                                <label for="odoo_account_select"> -> </label>
+                                <select name="odoo_account_select_{{ child.uuid }}"
+                                        id="odoo_account_select_{{ child.uuid }}">
+                                    <option value="None">Changez de compte</option>
+
+                                    {% for account in account_analytic %}
+                                        <option value="{{ account.uuid }}">{{ account }}</option>
+                                    {% endfor %}
+                                </select>
+
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+                <input type="submit" value="MAJ">
+            </form>
+        </table>
+    </div>
 
 
-    <h3>Table des account.journal Odoo</h3>
-    <form action="/" method="post">
-        {% csrf_token %}
-        <input id="get_labels" style="display: None" name="button_action_odoo" value="get_account_analytic">
-        <input type="submit" value="Get account.analytic">
-    </form>
-    <table>
-        <tr>
-            <th>Groupe</th>
-            <th>Journal</th>
-            <th>Code</th>
-        </tr>
-
-        {% for account in account_analytic %}
+    <div>
+        <h2>Odoo</h2>
+        <h3>Table des account.journal Odoo</h3>
+        <form action="/" method="post">
+            {% csrf_token %}
+            <input id="get_account_journal" style="display: None" name="button_action_odoo" value="get_account_journal">
+            <input type="submit" value="Get account.journal">
+        </form>
+        <table>
             <tr>
-                <td>{{ account.group.name }}</td>
-                <td>{{ account.name }}</td>
-                <td>{{ account.code }}</td>
+                <th>Journal</th>
             </tr>
+
+            {% for journal in account_journal %}
+                <tr>
+                    <td>{{ journal.name }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+
+
+        <h3>Table des account.journal Odoo</h3>
+        <form action="/" method="post">
+            {% csrf_token %}
+            <input id="get_account_analytic" style="display: None" name="button_action_odoo"
+                   value="get_account_analytic">
+            <input type="submit" value="Get account.analytic">
+        </form>
+        <table>
+            <tr>
+                <th>Groupe</th>
+                <th>Journal</th>
+                <th>Code</th>
+            </tr>
+
+            {% for account in account_analytic %}
+                <tr>
+                    <td>{{ account.group.name }}</td>
+                    <td>{{ account.name }}</td>
+                    <td>{{ account.code }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+
+        <h3>Table des Transactions Qonto</h3>
+        <form action="/" method="post">
+            {% csrf_token %}
+            <input id="get_transactions" style="display: None" name="button_action_qonto" value="get_transactions">
+            <input type="submit" value="Get transactions">
+        </form>
+
+        {% for iban, side in alltransactions.items %}
+            <div style="margin: 1em 0">
+                <strong>Compte : {{ iban.name }}</strong>
+                {% for creditORdebit, transaction_list in side.items %}
+                    <div style="margin: 1em 0">
+                        {% if creditORdebit == 'C' %}<strong>Crédits</strong>{% else %}
+                            <strong>Débits</strong>{% endif %}
+                        <table>
+                            <tr>
+                                <th>emitted_at</th>
+                                <th>label</th>
+                                <th>category</th>
+                                <th>note</th>
+                                <th>amount_cents</th>
+                                <th>vat_amount_cents</th>
+                                <th>initiator_id</th>
+                            </tr>
+
+                            {% for transaction in transaction_list %}
+                                <tr>
+                                    <td>{{ transaction.emitted_at }}</td>
+                                    <td>{{ transaction.label }}</td>
+                                    <td>{{ transaction.category }}</td>
+                                    <td>{{ transaction.note }}</td>
+                                    <td>{{ transaction.amount_cents }}</td>
+                                    <td>{{ transaction.vat_amount_cents }}</td>
+                                    <td>{{ transaction.initiator_id }}</td>
+                                </tr>
+                            {% endfor %}
+                        </table>
+
+                    </div>
+                {% endfor %}
+
+            </div>
         {% endfor %}
-    </table>
-</div>
 
 
-{% load django_browser_reload %}
-</body>
-</html>
+    </div>
+{% endblock %}

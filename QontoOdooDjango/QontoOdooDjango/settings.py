@@ -136,5 +136,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SHELL_PLUS_IMPORTS = [
     'from tiqo_parser.odoo_api import OdooApi',
     'from tiqo_parser.qonto_api import QontoApi',
-    'import requests',
+    'import requests, os, pathlib, json, re',
+    'from django.template.defaultfilters import slugify',
 ]
