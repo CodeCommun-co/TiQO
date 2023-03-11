@@ -138,5 +138,5 @@ SHELL_PLUS_IMPORTS = [
     'from tiqo_parser.qonto_api import QontoApi',
     'import requests, os, pathlib, json, re',
     'from django.template.defaultfilters import slugify',
-    'from tiqo_parser import DecimalEncoder'
+    'from tiqo_parser.odoo_api import DecimalEncoder'
 ]

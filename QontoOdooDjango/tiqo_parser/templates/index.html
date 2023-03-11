@@ -6,7 +6,50 @@
     </div>
     <div>
         <h2>Qonto</h2>
-        <h3>Table des tags Qonto, classée par parents/enfants</h3>
+        <h3>Table des User et bénéficiares Qonto</h3>
+        <form action="/" method="post">
+            {% csrf_token %}
+            <input id="get_qonto_contact" style="display: None" name="get_qonto_contact" value="get_qonto_contact">
+            <input type="submit" value="Get Contacts">
+        </form>
+        <button type="button" onclick="submit_form()">Valider les changements</button>
+
+        <table>
+            <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Liaison Odoo</th>
+                <th>changez de liaison</th>
+                <th>Créer Odoo Contact</th>
+            </tr>
+            <form id="odoo_contact_select" action="/" method="post">
+                {% csrf_token %}
+                {% for contact in qonto_contacts %}
+
+                    <tr>
+                        <td>{{ contact }}</td>
+                        <td>{{ contact.email }}</td>
+                        <td>{{ contact.odoo_contact }}</td>
+                        <td>
+                            <label for="odoo_contact_select{{ contact.uuid }}"></label>
+                            <select name="odoo_contact_select_{{ contact.uuid }}"
+                                    id="odoo_contact_select{{ contact.uuid }}">
+                                <option value="None">Changez de compte</option>
+                                {% for odoo_contact in odoo_contacts %}
+                                    <option value="{{ odoo_contact.uuid }}">{{ odoo_contact }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <button type="button" onclick="send_to_odoo('{{ contact.uuid }}')">Create to Odoo</button>
+                        </td>
+
+                    </tr>
+                {% endfor %}
+            </form>
+        </table>
+
+
         <form action="/" method="post">
             {% csrf_token %}
             <input id="get_labels" style="display: None" name="button_action_qonto" value="get_labels">
@@ -118,8 +161,9 @@
                                 <th>note</th>
                                 <th>amount_cents</th>
                                 <th>vat_amount_cents</th>
-                                <th>initiator_id</th>
+                                <th>initiator</th>
                                 <th>attachment</th>
+                                <th>Beneficiaire</th>
                             </tr>
 
                             {% for transaction in transaction_list %}
@@ -130,11 +174,16 @@
                                     <td>{{ transaction.note }}</td>
                                     <td>{{ transaction.amount_cents }}</td>
                                     <td>{{ transaction.vat_amount_cents }}</td>
-                                    <td>{{ transaction.initiator_id }}</td>
+                                    <td>{{ transaction.initiator }}</td>
                                     <td>
                                         {% for attachment in transaction.attachments.all %}
                                             <a href="{{ attachment.url_qonto }}">A{{ forloop.counter }}</a>
                                         {% endfor %}
+                                    </td>
+                                    <td>
+                                        {% if transaction.beneficiary %}
+                                            {{ transaction.beneficiary }}
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -148,4 +197,16 @@
 
 
     </div>
+{% endblock %}
+
+{% block javascript %}
+    <script>
+        function send_to_odoo(contact_uuid) {
+            window.location.href = "/create_odoo_contact/" + contact_uuid;
+        };
+
+        function submit_form() {
+            document.getElementById("odoo_contact_select").submit();
+        };
+    </script>
 {% endblock %}

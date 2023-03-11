@@ -4,7 +4,10 @@ import json
 
 from django.contrib.sites import requests
 import requests
-from tiqo_parser.models import Configuration, Label, AccountJournal, AccountAnalyticGroup, AccountAnalyticAccount
+from django.utils.text import slugify
+
+from tiqo_parser.models import Configuration, Label, AccountJournal, AccountAnalyticGroup, AccountAnalyticAccount, \
+    OdooContact
 from tiqo_parser.serializers import LabelsSerializer
 
 import logging
@@ -29,7 +32,7 @@ class OdooApi():
         if not any([self.login, self.api_key, self.url, self.odoo_dbname]):
             raise Exception("Bad Odoo credentials. Set its in the admin panel.")
 
-        self.params = {
+        self.params : dict = {
             "db": f"{self.odoo_dbname}",
             "login": f"{self.login}",
             "apikey": f"{self.api_key}",
@@ -42,8 +45,10 @@ class OdooApi():
             'content-type': 'application/json'
         }
 
+        postdata = {}
+        postdata.update(self.params)
         data = json.dumps({
-            "params": self.params
+            "params": postdata,
         }, cls=DecimalEncoder)
 
         session = requests.session()
@@ -61,20 +66,66 @@ class OdooApi():
 
         return response
 
+    def get_all_contacts(self):
+        # Cherche tous les contacts de Odoo et les renseigne dans la DB
+        url = f"{self.url}tibillet-api/xmlrpc/search_read"
+        headers = {
+            'content-type': 'application/json'
+        }
+
+        postdata = {}
+        postdata["search_read_data"] = {
+            "model": "res.partner",
+            "filters": [],
+            "fields": ["name", "email", "id"],
+        }
+
+        postdata.update(self.params)
+        data = json.dumps({
+            "params": postdata,
+        }, cls=DecimalEncoder)
+
+        session = requests.session()
+        response = session.post(url, data=data, headers=headers)
+        session.close()
+        if response.status_code == 200:
+            resp_json = response.json()
+            for contact in resp_json.get('result'):
+                odoo_contact = OdooContact.objects.filter(id_odoo=contact.get('id'))
+                if odoo_contact.exists():
+                    print(f"Contact {contact.get('name')} already exists in DB. Updating it.")
+                    odoo_contact.update(
+                        name=contact.get('name'),
+                        email=contact.get('email'),
+                    )
+                else:
+                    print(f"Contact {contact.get('name')} doesn't exist in DB. Creating it.")
+                    OdooContact.objects.create(
+                        name=contact.get('name'),
+                        email=contact.get('email'),
+                        id_odoo=contact.get('id'),
+                    )
+
+        return OdooContact.objects.all()
+
     def gc_contact(self, email: str, name: str):
         url = f"{self.url}tibillet-api/xmlrpc/gc_contact"
         headers = {
             'content-type': 'application/json'
         }
 
+        if not email:
+            email = f"{slugify(name)}@{slugify(name)}.none"
         # On ajoute les infos de membre au post DATA
-        self.params["membre"] = {
+        postdata = {}
+        postdata["membre"] = {
             "name": f"{name.capitalize()}",
             "email": f"{email}"
         }
 
+        postdata.update(self.params)
         data = json.dumps({
-            "params": self.params,
+            "params": postdata,
         }, cls=DecimalEncoder)
 
         session = requests.session()
@@ -82,17 +133,18 @@ class OdooApi():
         session.close()
         return response.json()
 
-    def create_draft_invoice(self, data: dict):
+    def create_draft_invoice(self):
         url = f"{self.url}tibillet-api/xmlrpc/create_draft_invoice"
         headers = {
             'content-type': 'application/json'
         }
 
         # On ajoute les infos de membre au post DATA
-        self.params["invoice_data"] = {'coucou': 'coucou'}
-
+        postdata = {}
+        postdata["invoice_data"] = {'coucou': 'coucou'}
+        postdata.update(self.params)
         data = json.dumps({
-            "params": self.params,
+            "params": postdata,
         }, cls=DecimalEncoder)
 
         session = requests.session()
@@ -110,8 +162,10 @@ class OdooApi():
             'content-type': 'application/json'
         }
 
+        postdata = {}
+        postdata.update(self.params)
         data = json.dumps({
-            "params": self.params
+            "params": postdata,
         }, cls=DecimalEncoder)
 
         session = requests.session()
@@ -137,8 +191,10 @@ class OdooApi():
             'content-type': 'application/json'
         }
 
+        postdata = {}
+        postdata.update(self.params)
         data = json.dumps({
-            "params": self.params
+            "params": postdata,
         }, cls=DecimalEncoder)
 
         session = requests.session()

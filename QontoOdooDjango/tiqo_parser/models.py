@@ -19,6 +19,18 @@ class Configuration(SingletonModel):
 
 ### ODOO TABLE
 
+class OdooContact(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    name = models.CharField(max_length=100)
+    id_odoo = models.SmallIntegerField()
+    email = models.EmailField(blank=True, null=True)
+    type = models.CharField(choices=(('M', 'membership'), ('B', 'beneficiarie')), max_length=1)
+
+    def __str__(self):
+        if self.email and self.name:
+            return f"{self.name} ({self.email})"
+        return self.name
+
 class AccountJournal(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
     name = models.CharField(max_length=100)
@@ -74,17 +86,19 @@ class Label(models.Model):
         return self.name
 
 
-class Contact(models.Model):
+class QontoContact(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(blank=True, null=True)
     type = models.CharField(choices=(('M', 'membership'), ('B', 'beneficiarie')), max_length=1)
 
+    odoo_contact = models.ForeignKey(OdooContact, on_delete=models.CASCADE, blank=True, null=True)
+
     def __str__(self):
         if self.first_name and self.last_name:
             return f"{self.first_name} {self.last_name[0].upper()}."
-        return self.first_name
+        return self.last_name if self.last_name else self.first_name
 
 
 class Category(models.Model):
@@ -110,19 +124,15 @@ class Transaction(models.Model):
     label = models.CharField(max_length=100, null=True, blank=True)
     vat_amount_cents = models.IntegerField(default=0, null=True, blank=True)
 
-    initiator_id = models.ForeignKey(Contact, on_delete=models.CASCADE, null=True, blank=True)
+    initiator = models.ForeignKey(QontoContact, on_delete=models.CASCADE, null=True, blank=True, related_name='initiator_transactions')
     card_last_digits = models.CharField(max_length=4, null=True, blank=True)
 
     category = models.ForeignKey(Category, on_delete=models.CASCADE, blank=True, null=True)
     label_ids = models.ManyToManyField(Label, related_name='transactions')
 
-    # attachment = models.FileField(upload_to='attachments', blank=True, null=True)
-
-# Les transactions qui vont vers des comptes externes ( virements )
-class ExternalTransfer(models.Model):
-    transaction = models.OneToOneField(Transaction, on_delete=models.CASCADE, related_name='external_transfer')
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
-    beneficiary = models.ForeignKey(Contact, on_delete=models.CASCADE, null=True, blank=True)
+    # Les transactions qui vont vers des comptes externes ( virements )
+    uuid_external_transfer = models.UUIDField(null=True, blank=True)
+    beneficiary = models.ForeignKey(QontoContact, on_delete=models.CASCADE, null=True, blank=True, related_name='beneficiary_transactions')
     reference = models.TextField(null=True, blank=True)
 
 class Attachment(models.Model):

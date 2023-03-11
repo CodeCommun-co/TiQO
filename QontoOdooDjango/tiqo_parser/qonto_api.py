@@ -6,7 +6,7 @@ import requests
 import pathlib, os, json
 from django.template.defaultfilters import slugify
 
-from tiqo_parser.models import Configuration, Label, Iban, Transaction, Category, Contact, Attachment, ExternalTransfer
+from tiqo_parser.models import Configuration, Label, Iban, Transaction, Category, QontoContact, Attachment
 from tiqo_parser.serializers import LabelsSerializer
 
 
@@ -34,7 +34,7 @@ class QontoApi():
         print(response.text)
         raise Exception(response.text)
 
-    def get_ibans(self):
+    def get_all_ibans(self):
         info_orga = self._get_request_api("organization")
         if info_orga.get('organization'):
             if info_orga.get('organization').get('bank_accounts'):
@@ -47,11 +47,11 @@ class QontoApi():
 
         return Iban.objects.all()
 
-    def get_contacts(self):
+    def get_all_contacts(self):
         memberships_response_dict = self._get_request_api("memberships")
         members = memberships_response_dict.get('memberships')
         for member in members:
-            Contact.objects.get_or_create(
+            QontoContact.objects.get_or_create(
                 uuid=member.get('id'),
                 last_name=member.get('last_name'),
                 first_name=member.get('first_name'),
@@ -60,13 +60,13 @@ class QontoApi():
 
         beneficiaries_response_dict = self._get_request_api("beneficiaries")
         for beneficiary in beneficiaries_response_dict.get('beneficiaries'):
-            Contact.objects.get_or_create(
+            QontoContact.objects.get_or_create(
                 uuid=beneficiary.get('id'),
                 last_name=beneficiary.get('name'),
                 type="B",
             )
 
-        return Contact.objects.all()
+        return QontoContact.objects.all()
 
     def get_all_external_transfers(self):
         all_external_transfers = []
@@ -83,21 +83,21 @@ class QontoApi():
         for external_transfer in all_external_transfers:
             if external_transfer.get('transaction_id'):
                 tr = Transaction.objects.filter(uuid=external_transfer.get('transaction_id'))
-                contact = Contact.objects.filter(uuid=external_transfer.get('beneficiary_id'))
+                contact = QontoContact.objects.filter(uuid=external_transfer.get('beneficiary_id'))
                 if contact.exists() and tr.exists():
-                    ext, created = ExternalTransfer.objects.get_or_create(
-                        uuid=external_transfer.get('id'),
-                        transaction=tr.first(),
-                        reference=external_transfer.get('reference'),
-                        beneficiary=contact.first(),
-                    )
-                    print(f"ExternalTransfer {ext.reference} - created : {created}")
+                    transaction = tr.first()
+                    transaction.uuid_external_transfer=external_transfer.get('id')
+                    transaction.reference=external_transfer.get('reference')
+                    transaction.beneficiary=contact.first()
+                    transaction.save()
 
-        return ExternalTransfer.objects.all()
+                    print(f"ExternalTransfer {transaction.reference}")
+
+        return all_external_transfers
 
     def fetch_all_transaction(self):
         # Mise à jour des IBAN
-        ibans = self.get_ibans()
+        ibans = self.get_all_ibans()
 
         transactions = {}
         # Qonto demande l'iban du compte pour récupérer les transactions
@@ -165,8 +165,8 @@ class QontoApi():
                 db_attachement.transactions.add(db_transaction)
                 return db_attachement
 
-    def get_transactions(self):
-        contacts = self.get_contacts()
+    def get_all_transactions(self):
+        contacts = self.get_all_contacts()
         transactions = self.fetch_all_transaction()
 
         for iban, transactions in transactions.items():
@@ -198,7 +198,7 @@ class QontoApi():
                         note=transaction.get('note'),
                         label=transaction.get('label'),
                         vat_amount_cents=transaction.get('vat_amount_cents', 0),
-                        initiator_id=initiator,
+                        initiator=initiator,
                         card_last_digits=transaction.get('card_last_digits'),
                         category=category,
                     )
@@ -213,7 +213,7 @@ class QontoApi():
 
         return Transaction.objects.all()
 
-    def get_labels(self):
+    def get_all_labels(self):
 
         labels_qonto = self._get_request_api("labels")
         labels = labels_qonto.get('labels')
