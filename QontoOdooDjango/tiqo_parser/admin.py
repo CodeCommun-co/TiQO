@@ -3,6 +3,8 @@ from solo.admin import SingletonModelAdmin
 from .models import Configuration, AccountJournal, Category, Label, QontoContact, Transaction, Iban, Attachment
 from .odoo_api import OdooApi
 
+admin.site.site_header = 'TiQO : Qonto X Odoo - Administration'
+
 
 # Register your models here.
 class ConfigurationAdmin(SingletonModelAdmin):
@@ -17,25 +19,130 @@ class ConfigurationAdmin(SingletonModelAdmin):
 
         super().save_model(request, obj, form, change)
 
+
 admin.site.register(Configuration, ConfigurationAdmin)
 
-class IbanAdmin(admin.ModelAdmin):
-    list_display = (
-        'name',
-        'iban',
-    )
-    ordering = ('name',)
 
-admin.site.register(Iban, IbanAdmin)
+# class IbanAdmin(admin.ModelAdmin):
+#     list_display = (
+#         'name',
+#         'iban',
+#     )
+#     ordering = ('name',)
+#
+# admin.site.register(Iban, IbanAdmin)
 
 class LabelADmin(admin.ModelAdmin):
+    change_list_template = 'custom_admin/labelqonto_changelist.html'
+
     list_display = (
         'parent',
         'name',
         'odoo_analytic_account',
+        'odoo_article',
     )
+
+    list_editable = (
+        'odoo_analytic_account',
+        'odoo_article',
+    )
+
     ordering = ('parent__name', 'name')
+
+    def get_queryset(self, request):
+        qs = super(LabelADmin, self).get_queryset(request)
+        qs = qs.exclude(parent__isnull=True)
+        return qs
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
 
 admin.site.register(Label, LabelADmin)
 
-admin.site.register(Attachment)
+
+class TransactionsAdmin(admin.ModelAdmin):
+    change_list_template = 'custom_admin/transactions_changelist.html'
+    list_display = (
+        "label",
+        "iban",
+        "side",
+        "emitted_at",
+        "amount_cents",
+        "initiator",
+        "beneficiary",
+        "as_attachment",
+    )
+    list_filter = (
+        "iban",
+        "side",
+        "initiator",
+        "beneficiary",
+    )
+
+    ordering = ('iban', 'side', 'emitted_at')
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
+
+admin.site.register(Transaction, TransactionsAdmin)
+
+
+def button_action_create_odoo_contact(modeladmin, request, queryset):
+    for qonto_contact in queryset:
+        email = qonto_contact.email
+        name = qonto_contact.name()
+
+        if not email:
+            messages.add_message(request, messages.ERROR, f"Pas d'email pour {name}. Compte Odoo non créé.")
+        else:
+            odooApi = OdooApi()
+            response_odoo = odooApi.gc_contact(email, name)
+            if response_odoo.get('result'):
+                all_odoo_contacts = odooApi.get_all_contacts()
+                odoo_contact = all_odoo_contacts.get(email=email)
+                qonto_contact.email = email
+                qonto_contact.odoo_contact = odoo_contact
+                qonto_contact.save()
+
+
+button_action_create_odoo_contact.short_description = "Envoyer vers Odoo"
+
+
+class QontoContactAdmin(admin.ModelAdmin):
+    change_list_template = 'custom_admin/qontocontact_changelist.html'
+    list_display = (
+        "name",
+        "email",
+        "type",
+        "odoo_contact",
+    )
+    list_filter = (
+        "type",
+        "odoo_contact",
+    )
+    ordering = ('first_name',)
+    list_editable = ("email", "odoo_contact",)
+    actions = [button_action_create_odoo_contact, ]
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
+    # def save_model(self, request, obj, form, change):
+    #     Si pas d'email mais un contact Odoo, on récupère l'email du contact Odoo
+    # if not obj.email and obj.odoo_contact:
+    #     obj.email = obj.odoo_contact.email
+    #     obj.save()
+
+
+admin.site.register(QontoContact, QontoContactAdmin)

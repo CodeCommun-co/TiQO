@@ -1,6 +1,8 @@
 import uuid
 from django.conf import settings
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from solo.models import SingletonModel
 
 
@@ -18,6 +20,14 @@ class Configuration(SingletonModel):
 
 
 ### ODOO TABLE
+
+class OdooArticles(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    name = models.CharField(max_length=100)
+    id_odoo = models.SmallIntegerField()
+
+    def __str__(self):
+        return self.name
 
 class OdooContact(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
@@ -79,6 +89,12 @@ class Label(models.Model):
 
     # Liaison avec Odoo :
     odoo_analytic_account = models.ForeignKey(AccountAnalyticAccount, on_delete=models.CASCADE, blank=True, null=True)
+    odoo_article = models.ForeignKey(OdooArticles, on_delete=models.CASCADE, blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Label Qonto'
+        verbose_name_plural = 'Labels Qonto'
+
 
     def __str__(self):
         if self.parent:
@@ -91,14 +107,28 @@ class QontoContact(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(blank=True, null=True)
-    type = models.CharField(choices=(('M', 'membership'), ('B', 'beneficiarie')), max_length=1)
+    type = models.CharField(choices=(('M', 'User Qonto'), ('B', 'Bénéficiaire')), max_length=1)
 
     odoo_contact = models.ForeignKey(OdooContact, on_delete=models.CASCADE, blank=True, null=True)
 
-    def __str__(self):
+    def name(self):
         if self.first_name and self.last_name:
             return f"{self.first_name} {self.last_name[0].upper()}."
         return self.last_name if self.last_name else self.first_name
+
+    def __str__(self):
+        return self.name()
+
+    class Meta:
+        verbose_name = 'Contact Qonto'
+        verbose_name_plural = 'Contacts Qonto'
+
+@receiver(post_save, sender=QontoContact)
+def odoo_email_to_contact(sender, instance, created, **kwargs):
+    if instance.odoo_contact:
+        if instance.email != instance.odoo_contact.email:
+            instance.email = instance.odoo_contact.email
+            instance.save()
 
 
 class Category(models.Model):
@@ -134,6 +164,17 @@ class Transaction(models.Model):
     uuid_external_transfer = models.UUIDField(null=True, blank=True)
     beneficiary = models.ForeignKey(QontoContact, on_delete=models.CASCADE, null=True, blank=True, related_name='beneficiary_transactions')
     reference = models.TextField(null=True, blank=True)
+
+    def as_attachment(self):
+        if self.attachments.all().count() > 0:
+            return True
+        return False
+    as_attachment.boolean = True
+
+    class Meta:
+        verbose_name = 'Transaction Qonto'
+        verbose_name_plural = 'Transactions Qonto'
+
 
 class Attachment(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)

@@ -7,7 +7,7 @@ import requests
 from django.utils.text import slugify
 
 from tiqo_parser.models import Configuration, Label, AccountJournal, AccountAnalyticGroup, AccountAnalyticAccount, \
-    OdooContact
+    OdooContact, OdooArticles
 from tiqo_parser.serializers import LabelsSerializer
 
 import logging
@@ -66,6 +66,41 @@ class OdooApi():
 
         return response
 
+    def get_all_articles(self):
+        # Cherche tous les articles de Odoo et les renseigne dans la DB
+        url = f"{self.url}tibillet-api/xmlrpc/search_read"
+        headers = {
+            'content-type': 'application/json'
+        }
+
+        postdata = {}
+        postdata["search_read_data"] = {
+            "model": "product.product",
+            "filters": [],
+            "fields": ["name", "id"],
+        }
+
+        postdata.update(self.params)
+        data = json.dumps({
+            "params": postdata,
+        }, cls=DecimalEncoder)
+
+        session = requests.session()
+        response = session.post(url, data=data, headers=headers)
+        session.close()
+        if response.status_code == 200:
+            resp_json = response.json()
+            for article in resp_json.get('result'):
+                odoo_article = OdooArticles.objects.filter(id_odoo=article.get('id'))
+                if not odoo_article.exists():
+                    odoo_article = OdooArticles.objects.create(
+                        id_odoo=article.get('id'),
+                        name=article.get('name'),
+                    )
+                    odoo_article.save()
+
+        return OdooArticles.objects.all()
+
     def get_all_contacts(self):
         # Cherche tous les contacts de Odoo et les renseigne dans la DB
         url = f"{self.url}tibillet-api/xmlrpc/search_read"
@@ -115,7 +150,8 @@ class OdooApi():
         }
 
         if not email:
-            email = f"{slugify(name)}@{slugify(name)}.none"
+            raise Exception("Email is required to create a contact in Odoo.")
+
         # On ajoute les infos de membre au post DATA
         postdata = {}
         postdata["membre"] = {

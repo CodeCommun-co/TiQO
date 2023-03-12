@@ -1,0 +1,17 @@
+{% extends 'admin/change_list.html' %}
+{% load i18n static %}
+{% load admin_list %}
+
+
+{% block object-tools %}
+    <a href="/action/refresh_qonto_label">
+        <button style="margin-left: 1em">Refresh Qonto Label</button>
+    </a>
+    <a href="/action/refresh_analytic_account">
+        <button style="margin-left: 1em">Refresh Odoo Analytic Account</button>
+    </a>
+    <a href="/action/refresh_odoo_articles">
+        <button style="margin-left: 1em">Refresh Odoo Articles</button>
+    </a>
+    {{ block.super }}
+{% endblock %}
