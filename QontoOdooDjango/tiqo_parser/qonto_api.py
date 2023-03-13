@@ -203,6 +203,10 @@ class QontoApi():
                         category=category,
                     )
 
+                    for label_qonto in transaction.get('label_ids', []):
+                        label_db = Label.objects.get(uuid=label_qonto)
+                        tr_db.label_ids.add(label_db)
+
                     # On valide et raffraichi depuis la db, paske sinon les valeurs plus haut sont toujours des strings...
                     tr_db.refresh_from_db()
                     for attachment_id in transaction.get('attachment_ids', []):

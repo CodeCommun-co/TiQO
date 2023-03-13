@@ -7,7 +7,7 @@ import requests
 from django.utils.text import slugify
 
 from tiqo_parser.models import Configuration, Label, AccountJournal, AccountAnalyticGroup, AccountAnalyticAccount, \
-    OdooContact, OdooArticles
+    OdooContact, OdooArticles, Transaction
 from tiqo_parser.serializers import LabelsSerializer
 
 import logging
@@ -32,7 +32,7 @@ class OdooApi():
         if not any([self.login, self.api_key, self.url, self.odoo_dbname]):
             raise Exception("Bad Odoo credentials. Set its in the admin panel.")
 
-        self.params : dict = {
+        self.params: dict = {
             "db": f"{self.odoo_dbname}",
             "login": f"{self.login}",
             "apikey": f"{self.api_key}",
@@ -90,14 +90,15 @@ class OdooApi():
         session.close()
         if response.status_code == 200:
             resp_json = response.json()
-            for article in resp_json.get('result'):
-                odoo_article = OdooArticles.objects.filter(id_odoo=article.get('id'))
-                if not odoo_article.exists():
-                    odoo_article = OdooArticles.objects.create(
-                        id_odoo=article.get('id'),
-                        name=article.get('name'),
-                    )
-                    odoo_article.save()
+            if resp_json:
+                for article in resp_json.get('result'):
+                    odoo_article = OdooArticles.objects.filter(id_odoo=article.get('id'))
+                    if not odoo_article.exists():
+                        odoo_article = OdooArticles.objects.create(
+                            id_odoo=article.get('id'),
+                            name=article.get('name'),
+                        )
+                        odoo_article.save()
 
         return OdooArticles.objects.all()
 
@@ -169,15 +170,29 @@ class OdooApi():
         session.close()
         return response.json()
 
-    def create_draft_invoice(self):
-        url = f"{self.url}tibillet-api/xmlrpc/create_draft_invoice"
-        headers = {
-            'content-type': 'application/json'
-        }
+    def create_draft_invoice(self, transaction: Transaction):
+        article: OdooArticles = transaction.odoo_article()
+        compte_analytique: AccountAnalyticAccount = transaction.odoo_analytic_account()
+        account: AccountJournal = transaction.odoo_journal_account()
+        beneficiary = transaction.beneficiary.odoo_contact
+        initiator = transaction.initiator.odoo_contact
+
 
         # On ajoute les infos de membre au post DATA
         postdata = {}
-        postdata["invoice_data"] = {'coucou': 'coucou'}
+        postdata["invoice_data"] = {
+            'article': article.id_odoo,
+            'compte_analytique': compte_analytique.id_odoo,
+            'account': account.id_odoo,
+            'beneficiaire_id': beneficiary.id_odoo,
+            'initiator_id': initiator.id_odoo,
+            'invoice_name': transaction.label,
+            'ammount_cents': transaction.amount_cents,
+            'date': transaction.emitted_at.date().strftime("%Y-%m-%d"),
+        }
+
+        url = f"{self.url}tibillet-api/xmlrpc/tiqo_create_draft_invoice"
+        headers = { 'content-type': 'application/json' }
         postdata.update(self.params)
         data = json.dumps({
             "params": postdata,
@@ -260,3 +275,5 @@ class OdooApi():
             return AccountAnalyticAccount.objects.all()
 
         raise Exception(f"Odoo server OFFLINE or BAD KEY : {response}")
+
+    # def create_draft_invoice(self):

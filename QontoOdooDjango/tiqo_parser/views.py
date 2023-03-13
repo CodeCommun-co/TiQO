@@ -30,12 +30,13 @@ def find_uuid_in_string(string):
 
 class refresh_odoo_articles(View):
 
-        @method_decorator(login_required)
-        def get(self, request):
-            odooApi = OdooApi()
-            articles = odooApi.get_all_articles()
-            messages.success(request, f"Articles mis à jour. Total : {articles.count()}")
-            return redirect('/admin/tiqo_parser/label')
+    @method_decorator(login_required)
+    def get(self, request):
+        odooApi = OdooApi()
+        articles = odooApi.get_all_articles()
+        messages.success(request, f"Articles mis à jour. Total : {articles.count()}")
+        return redirect('/admin/tiqo_parser/label')
+
 
 class refresh_qonto_label(View):
 
@@ -45,6 +46,7 @@ class refresh_qonto_label(View):
         labels = qontoApi.get_all_labels()
         messages.success(request, f"labels mis à jour. Total : {len(Label.objects.all())}")
         return redirect('/admin/tiqo_parser/label')
+
 
 class refresh_qonto_transactions(View):
 
@@ -56,6 +58,7 @@ class refresh_qonto_transactions(View):
 
         return redirect('/admin/tiqo_parser/transaction')
 
+
 class refresh_odoo_contacts(View):
 
     @method_decorator(login_required)
@@ -64,6 +67,7 @@ class refresh_odoo_contacts(View):
         odooApi.get_all_contacts()
         messages.success(request, f"Contacts mis à jour. Total : {len(OdooContact.objects.all())}")
         return redirect('/admin/tiqo_parser/qontocontact')
+
 
 class refresh_qonto_contacts(View):
 
@@ -74,14 +78,26 @@ class refresh_qonto_contacts(View):
         messages.success(request, f"Contacts mis à jour. Total : {len(QontoContact.objects.all())}")
         return redirect('/admin/tiqo_parser/qontocontact')
 
+class refresh_journal_account(View):
+
+    @method_decorator(login_required)
+    def get(self, request):
+        odooApi = OdooApi()
+        odooApi.get_account_journal()
+        messages.success(request,
+                         f"Journaux de compte Odoo mis à jour. Total : {len(AccountJournal.objects.all())}")
+        return redirect('/admin/tiqo_parser/label')
+
 class refresh_analytic_account(View):
 
     @method_decorator(login_required)
     def get(self, request):
         odooApi = OdooApi()
         odooApi.get_account_analytic()
-        messages.success(request, f"Comptes analytiques mis à jour. Total : {len(AccountAnalyticAccount.objects.all())}")
+        messages.success(request,
+                         f"Comptes analytiques mis à jour. Total : {len(AccountAnalyticAccount.objects.all())}")
         return redirect('/admin/tiqo_parser/label')
+
 
 class create_odoo_contact(View):
 
@@ -95,7 +111,7 @@ class create_odoo_contact(View):
         if not email:
             messages.add_message(request, messages.ERROR, 'Pas d\'email pour ce contact Qonto')
             email = f"{slugify(name)}@{slugify(name)}.com"
-        if not qonto_contact.odoo_contact :
+        if not qonto_contact.odoo_contact:
             odooApi = OdooApi()
             response_odoo = odooApi.gc_contact(email, name)
             if response_odoo.get('result'):
@@ -130,8 +146,6 @@ class index(View):
             "qonto_contacts": qonto_contacts,
         }
         return render(request, 'index.html', context=context)
-
-
 
 
 class material(View):

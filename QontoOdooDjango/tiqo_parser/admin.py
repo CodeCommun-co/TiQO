@@ -1,6 +1,7 @@
 from django.contrib import admin, messages
 from solo.admin import SingletonModelAdmin
-from .models import Configuration, AccountJournal, Category, Label, QontoContact, Transaction, Iban, Attachment
+from .models import Configuration, AccountJournal, Category, Label, QontoContact, Transaction, Iban, Attachment, \
+    OdooArticles, AccountAnalyticAccount
 from .odoo_api import OdooApi
 
 admin.site.site_header = 'TiQO : Qonto X Odoo - Administration'
@@ -38,13 +39,15 @@ class LabelADmin(admin.ModelAdmin):
     list_display = (
         'parent',
         'name',
-        'odoo_analytic_account',
         'odoo_article',
+        'odoo_journal_account',
+        'odoo_analytic_account',
     )
 
     list_editable = (
-        'odoo_analytic_account',
         'odoo_article',
+        'odoo_journal_account',
+        'odoo_analytic_account',
     )
 
     ordering = ('parent__name', 'name')
@@ -64,6 +67,42 @@ class LabelADmin(admin.ModelAdmin):
 admin.site.register(Label, LabelADmin)
 
 
+def action_create_draft_invoice(modeladmin, request, queryset):
+    for transaction in queryset:
+        transaction: Transaction
+        if not transaction.where_to_odoo():
+            messages.add_message(request, messages.ERROR,
+                                 f"Transaction {transaction} : Pas d'article lié au tag Qonto. "
+                                 f"Merci de lier l'article la liste des labels Qonto")
+        if not transaction.beneficiary or not transaction.initiator:
+            messages.add_message(request, messages.ERROR,
+                                 f"Transaction {transaction} : Pas de donneur d'ordre ou de bénéficiaire. "
+                                 f"Merci de renseigner les champs dans la liste des transactions")
+
+        if transaction.beneficiary and transaction.initiator:
+            if not transaction.beneficiary.odoo_contact or not transaction.initiator.odoo_contact:
+                messages.add_message(request, messages.ERROR,
+                                     f"Pas de contact Odoo relié au bénéficiaire ou à l'initiateur de la transaction. "
+                                     f"Merci de renseigner les champs dans la liste des contacts Qonto")
+
+            else :
+                article: OdooArticles = transaction.odoo_article()
+                compte_analytique: AccountAnalyticAccount = transaction.odoo_analytic_account()
+                journal: AccountJournal = transaction.odoo_journal_account()
+                beneficiary = transaction.beneficiary.odoo_contact.id_odoo
+                initiator = transaction.initiator.odoo_contact.id_odoo
+
+                odoo_api = OdooApi()
+                response = odoo_api.create_draft_invoice(transaction)
+                if response.get('result'):
+                    # return {'status': True, 'invoice_draft_id': invoice_draft_id, 'article_added': article_added}
+                    if response.get('result').get('status'):
+                        messages.add_message(request, messages.INFO, f"{response}")
+                else:
+                    messages.add_message(request, messages.ERROR, f"{response}")
+
+
+
 class TransactionsAdmin(admin.ModelAdmin):
     change_list_template = 'custom_admin/transactions_changelist.html'
     list_display = (
@@ -75,13 +114,18 @@ class TransactionsAdmin(admin.ModelAdmin):
         "initiator",
         "beneficiary",
         "as_attachment",
+        "odoo_sended",
+        "label_ids_string",
+        "where_to_odoo",
     )
+
     list_filter = (
         "iban",
         "side",
         "initiator",
         "beneficiary",
     )
+    actions = [action_create_draft_invoice, ]
 
     ordering = ('iban', 'side', 'emitted_at')
 
