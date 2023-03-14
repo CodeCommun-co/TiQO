@@ -176,7 +176,10 @@ class OdooApi():
         account: AccountJournal = transaction.odoo_journal_account()
         beneficiary = transaction.beneficiary.odoo_contact
         initiator = transaction.initiator.odoo_contact
-
+        attachments = transaction.attachments.all()
+        list_attachments = None
+        if attachments.count() > 0:
+            list_attachments = [(attachment.name, attachment.url_qonto) for attachment in attachments]
 
         # On ajoute les infos de membre au post DATA
         postdata = {}
@@ -189,6 +192,7 @@ class OdooApi():
             'invoice_name': transaction.label,
             'ammount_cents': transaction.amount_cents,
             'date': transaction.emitted_at.date().strftime("%Y-%m-%d"),
+            'attachments': list_attachments,
         }
 
         url = f"{self.url}tibillet-api/xmlrpc/tiqo_create_draft_invoice"
@@ -201,10 +205,18 @@ class OdooApi():
         session = requests.session()
         response = session.post(url, data=data, headers=headers)
         session.close()
-        response_json = response.json()
-        print(response_json)
+        if response.status_code == 200:
+            resp_json = response.json()
+            print(resp_json)
+            if resp_json.get('result'):
+                invoice_draft_id = resp_json.get('result').get('invoice_draft_id')
+                if invoice_draft_id :
+                    transaction.odoo_invoice_id = invoice_draft_id
+                    transaction.odoo_sended = True
+                    transaction.save()
+                    return resp_json
 
-        return response_json
+        return response
 
     def get_account_journal(self):
         url = f"{self.url}tibillet-api/xmlrpc/account_journal"

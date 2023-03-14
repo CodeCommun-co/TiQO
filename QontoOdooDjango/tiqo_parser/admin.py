@@ -3,6 +3,7 @@ from solo.admin import SingletonModelAdmin
 from .models import Configuration, AccountJournal, Category, Label, QontoContact, Transaction, Iban, Attachment, \
     OdooArticles, AccountAnalyticAccount
 from .odoo_api import OdooApi
+from .qonto_api import QontoApi
 
 admin.site.site_header = 'TiQO : Qonto X Odoo - Administration'
 
@@ -70,6 +71,7 @@ admin.site.register(Label, LabelADmin)
 def action_create_draft_invoice(modeladmin, request, queryset):
     for transaction in queryset:
         transaction: Transaction
+
         if not transaction.where_to_odoo():
             messages.add_message(request, messages.ERROR,
                                  f"Transaction {transaction} : Pas d'article lié au tag Qonto. "
@@ -79,6 +81,11 @@ def action_create_draft_invoice(modeladmin, request, queryset):
                                  f"Transaction {transaction} : Pas de donneur d'ordre ou de bénéficiaire. "
                                  f"Merci de renseigner les champs dans la liste des transactions")
 
+        if transaction.odoo_sended:
+            messages.add_message(request, messages.ERROR,
+                                 f"Transaction {transaction} : Facture déjà envoyée à Odoo. ")
+            # return False
+
         if transaction.beneficiary and transaction.initiator:
             if not transaction.beneficiary.odoo_contact or not transaction.initiator.odoo_contact:
                 messages.add_message(request, messages.ERROR,
@@ -86,14 +93,21 @@ def action_create_draft_invoice(modeladmin, request, queryset):
                                      f"Merci de renseigner les champs dans la liste des contacts Qonto")
 
             else :
+                odoo_api = OdooApi()
+                qonto_api = QontoApi()
+
                 article: OdooArticles = transaction.odoo_article()
                 compte_analytique: AccountAnalyticAccount = transaction.odoo_analytic_account()
                 journal: AccountJournal = transaction.odoo_journal_account()
                 beneficiary = transaction.beneficiary.odoo_contact.id_odoo
                 initiator = transaction.initiator.odoo_contact.id_odoo
 
-                odoo_api = OdooApi()
+                # Mise à jour des url qonto. Ils ne sont valides que 24h
+                for attachment in transaction.attachments.all():
+                    attachment = qonto_api.download_or_update_attachment(attachment.uuid, transaction)
+
                 response = odoo_api.create_draft_invoice(transaction)
+
                 if response.get('result'):
                     # return {'status': True, 'invoice_draft_id': invoice_draft_id, 'article_added': article_added}
                     if response.get('result').get('status'):

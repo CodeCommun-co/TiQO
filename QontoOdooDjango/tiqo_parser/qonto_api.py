@@ -65,7 +65,6 @@ class QontoApi():
                 last_name=beneficiary.get('name'),
                 type="B",
             )
-
         return QontoContact.objects.all()
 
     def get_all_external_transfers(self):
@@ -79,16 +78,15 @@ class QontoApi():
             current_page = response_dict.get('meta').get('next_page')
             print(f"get_external_transfers next page : {current_page}")
 
-
         for external_transfer in all_external_transfers:
             if external_transfer.get('transaction_id'):
                 tr = Transaction.objects.filter(uuid=external_transfer.get('transaction_id'))
                 contact = QontoContact.objects.filter(uuid=external_transfer.get('beneficiary_id'))
                 if contact.exists() and tr.exists():
                     transaction = tr.first()
-                    transaction.uuid_external_transfer=external_transfer.get('id')
-                    transaction.reference=external_transfer.get('reference')
-                    transaction.beneficiary=contact.first()
+                    transaction.uuid_external_transfer = external_transfer.get('id')
+                    transaction.reference = external_transfer.get('reference')
+                    transaction.beneficiary = contact.first()
                     transaction.save()
 
                     print(f"ExternalTransfer {transaction.reference}")
@@ -116,23 +114,26 @@ class QontoApi():
 
         return transactions
 
-    def download_attachment(self, uuid_attachment: str, db_transaction: Transaction, download_file=False):
+    def download_or_update_attachment(self, uuid_attachment: str, db_transaction: Transaction, download_file=False):
         # On va chercher l'attachment dans la base de données
-        # Peut être qu'il existe déja
-        if Attachment.objects.filter(uuid=uuid_attachment).exists():
-            db_attachement = Attachment.objects.get(uuid=uuid_attachment)
-            db_attachement.transactions.add(db_transaction)
-            print(f"EXIST attachment uuid : {db_attachement.name}")
-            return db_attachement
+        # Peut-être qu'il existe déja
+        response_dict = self._get_request_api(f"attachments/{uuid_attachment}")
+        attachment = response_dict.get('attachment')
+        url = attachment.get('url')
+        db_attachement = Attachment.objects.filter(uuid=uuid_attachment)
+        if db_attachement.exists():
+            db_attachement.update(
+                url_qonto=url
+            )
+            print(f"EXIST attachment uuid : {db_attachement.first().name}")
+            return db_attachement.first()
+
         else:
-            response_dict = self._get_request_api(f"attachments/{uuid_attachment}")
-            attachment = response_dict.get('attachment')
 
             if attachment:
                 file_content_type = attachment.get('file_content_type')
                 file_ext = file_content_type.partition('/')[-1]
                 file_name = f"{attachment['id']}.{file_ext}"
-                url = attachment.get('url')
                 full_path_file = None
 
                 if download_file:
@@ -210,7 +211,7 @@ class QontoApi():
                     # On valide et raffraichi depuis la db, paske sinon les valeurs plus haut sont toujours des strings...
                     tr_db.refresh_from_db()
                     for attachment_id in transaction.get('attachment_ids', []):
-                        self.download_attachment(attachment_id, tr_db)
+                        self.download_or_update_attachment(attachment_id, tr_db)
 
         # On va chercher les external transfers liés aux transactions
         external_transferts = self.get_all_external_transfers()
