@@ -85,7 +85,7 @@ def action_create_draft_invoice(modeladmin, request, queryset):
 
         if transaction.odoo_sended:
             messages.add_message(request, messages.ERROR,
-                                 f"Transaction {transaction} : Facture déjà envoyée à Odoo. ")
+                                 f"Transaction {transaction} : Facture déjà envoyée à Odoo. Cela va créer un doublon ! (mais en brouillon ...) ")
             # return False
 
         if transaction.beneficiary and transaction.initiator:
