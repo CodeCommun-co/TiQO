@@ -181,4 +181,5 @@ Sous licence libre GPLv3
 ## Financements : 
 
 Raffinerie : 1 000 € (5 Jours de co-rem : Budget Outils numérique )
+
 Coopérative TiBillet : 1 000 € (5 Jours de dev)
