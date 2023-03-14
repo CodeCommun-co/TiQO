@@ -199,6 +199,7 @@ class QontoApi():
                         note=transaction.get('note'),
                         label=transaction.get('label'),
                         vat_amount_cents=transaction.get('vat_amount_cents', 0),
+                        vat_amount=transaction.get('vat_amount', 0),
                         initiator=initiator,
                         card_last_digits=transaction.get('card_last_digits'),
                         category=category,

@@ -7,7 +7,7 @@ import requests
 from django.utils.text import slugify
 
 from tiqo_parser.models import Configuration, Label, AccountJournal, AccountAnalyticGroup, AccountAnalyticAccount, \
-    OdooContact, OdooArticles, Transaction
+    OdooContact, OdooArticles, Transaction, AccountAccount
 from tiqo_parser.serializers import LabelsSerializer
 
 import logging
@@ -173,7 +173,8 @@ class OdooApi():
     def create_draft_invoice(self, transaction: Transaction):
         article: OdooArticles = transaction.odoo_article()
         compte_analytique: AccountAnalyticAccount = transaction.odoo_analytic_account()
-        account: AccountJournal = transaction.odoo_journal_account()
+        account_account: AccountAccount = transaction.account_account_id()
+        account_journal: AccountJournal = transaction.odoo_journal_account()
         beneficiary = transaction.beneficiary.odoo_contact
         initiator = transaction.initiator.odoo_contact
         attachments = transaction.attachments.all()
@@ -185,12 +186,14 @@ class OdooApi():
         postdata = {}
         postdata["invoice_data"] = {
             'article': article.id_odoo,
-            'compte_analytique': compte_analytique.id_odoo,
-            'account': account.id_odoo,
+            'compte_analytique': compte_analytique,
+            'account_account': account_account,
+            'account_journal': account_journal,
             'beneficiaire_id': beneficiary.id_odoo,
             'initiator_id': initiator.id_odoo,
             'invoice_name': transaction.label,
             'ammount_cents': transaction.amount_cents,
+            'vat_amount': transaction.vat_amount,
             'date': transaction.emitted_at.date().strftime("%Y-%m-%d"),
             'attachments': list_attachments,
         }
@@ -217,6 +220,39 @@ class OdooApi():
                     return resp_json
 
         return response
+
+    def get_account_account(self):
+        # Cherche tous les contacts de Odoo et les renseigne dans la DB
+        url = f"{self.url}tibillet-api/xmlrpc/search_read"
+        headers = {
+            'content-type': 'application/json'
+        }
+
+        postdata = {}
+        postdata["search_read_data"] = {
+            "model": "account.account",
+            "filters": [],
+            "fields": ["name", "id", "code"],
+        }
+
+        postdata.update(self.params)
+        data = json.dumps({
+            "params": postdata,
+        }, cls=DecimalEncoder)
+
+        session = requests.session()
+        response = session.post(url, data=data, headers=headers)
+        session.close()
+        if response.status_code == 200:
+            resp_json = response.json()
+            for account in resp_json.get('result'):
+                account, created = AccountAccount.objects.get_or_create(
+                    name=account['name'],
+                    code=account['code'],
+                    id_odoo=account['id'],
+
+                )
+            return AccountAccount.objects.all()
 
     def get_account_journal(self):
         url = f"{self.url}tibillet-api/xmlrpc/account_journal"

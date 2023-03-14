@@ -41,14 +41,16 @@ class LabelADmin(admin.ModelAdmin):
         'parent',
         'name',
         'odoo_article',
-        'odoo_journal_account',
         'odoo_analytic_account',
+        'odoo_journal_account',
+        'odoo_account_account',
     )
 
     list_editable = (
         'odoo_article',
-        'odoo_journal_account',
         'odoo_analytic_account',
+        'odoo_journal_account',
+        'odoo_account_account',
     )
 
     ordering = ('parent__name', 'name')

@@ -5,23 +5,25 @@
 
 {% block object-tools %}
     <div style="margin: 1em">
-        <a href="/action/refresh_qonto_label">
-            <button style="margin-left: 1em">Refresh Qonto Label</button>
-        </a>
-        <a href="/action/refresh_odoo_articles">
-            <button style="margin-left: 1em">Refresh Odoo Articles</button>
+        <a href="/action/refresh_account_account">
+            <button style="margin-left: 1em">Refresh Odoo Account Account</button>
         </a>
         <a href="/action/refresh_journal_account">
             <button style="margin-left: 1em">Refresh Odoo Journal Account</button>
         </a>
-
         <a href="/action/refresh_analytic_account">
             <button style="margin-left: 1em">Refresh Odoo Analytic Account</button>
         </a>
+        <a href="/action/refresh_odoo_articles">
+            <button style="margin-left: 1em">Refresh Odoo Articles</button>
+        </a>
+        <a href="/action/refresh_qonto_label">
+            <button style="margin-left: 1em">Refresh Qonto Label</button>
+        </a>
     </div>
     <div style="margin: 1em">
-        <div>Seul l'article est pris en compte aujourd'hui dans l'envoie et la création de facture Odoo.</div>
-        <div>A voir la méthode pour la suite si besoin ?</div>
+        <div>Seul l'article est obligatoire.</div>
+        <div>Renseignez les autres comptes si vous souhaitez remplacer la valeur par defaut de l'article</div>
     </div>
     {{ block.super }}
 {% endblock %}

@@ -41,6 +41,15 @@ class OdooContact(models.Model):
             return f"{self.name} ({self.email})"
         return self.name
 
+class AccountAccount(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=100)
+    id_odoo = models.SmallIntegerField()
+
+    def __str__(self):
+        return f"{self.code} {self.name}"
+
 class AccountJournal(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
     name = models.CharField(max_length=100)
@@ -95,6 +104,7 @@ class Label(models.Model):
     # Liaison avec Odoo :
     odoo_analytic_account = models.ForeignKey(AccountAnalyticAccount, on_delete=models.CASCADE, blank=True, null=True)
     odoo_journal_account = models.ForeignKey(AccountJournal, on_delete=models.CASCADE, blank=True, null=True)
+    odoo_account_account = models.ForeignKey(AccountAccount, on_delete=models.CASCADE, blank=True, null=True)
     odoo_article = models.ForeignKey(OdooArticles, on_delete=models.CASCADE, blank=True, null=True)
 
     class Meta:
@@ -103,11 +113,9 @@ class Label(models.Model):
 
     def is_valid(self):
         # Le label est il valide pour la création d'une facture vers Odoo.
-        # Il nous faut un compte analytique et un article
-        if self.odoo_analytic_account and \
-            self.odoo_article and \
-            self.odoo_journal_account :
-                return True
+        # Il nous faut au minimum un article ( le reste peut s'overider )
+        if self.odoo_article :
+            return True
         return False
 
     def __str__(self):
@@ -167,6 +175,7 @@ class Transaction(models.Model):
     note = models.TextField(blank=True, null=True)
     label = models.CharField(max_length=100, null=True, blank=True, verbose_name="Libellé")
     vat_amount_cents = models.IntegerField(default=0, null=True, blank=True)
+    vat_amount = models.DecimalField(max_digits=5, decimal_places=2, default=0, null=True, blank=True)
 
     initiator = models.ForeignKey(QontoContact, on_delete=models.CASCADE,
                                   null=True, blank=True, related_name='initiator_transactions',
@@ -201,8 +210,7 @@ class Transaction(models.Model):
     def where_to_odoo(self):
         if self.label_ids.all().count() > 0:
             first_label : Label = self.label_ids.first()
-            if first_label.is_valid():
-                return f"{first_label.odoo_article.name} > {first_label.odoo_analytic_account.name}"
+            return first_label.is_valid()
         else:
             return None
 
@@ -213,12 +221,20 @@ class Transaction(models.Model):
 
     def odoo_analytic_account(self):
         if self.where_to_odoo():
-            return self.label_ids.first().odoo_analytic_account
+            if self.label_ids.first().odoo_analytic_account :
+                return self.label_ids.first().odoo_analytic_account.odoo_id
         return None
 
     def odoo_journal_account(self):
         if self.where_to_odoo():
-            return self.label_ids.first().odoo_journal_account
+            if self.label_ids.first().odoo_journal_account:
+                return self.label_ids.first().odoo_journal_account.odoo_id
+        return None
+
+    def account_account_id(self):
+        if self.where_to_odoo():
+            if self.label_ids.first().odoo_account_account:
+                return self.label_ids.first().odoo_account_account.odoo_id
         return None
 
     class Meta:

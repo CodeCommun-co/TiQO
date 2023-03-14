@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.utils.text import slugify
 from django.views import View
 from tiqo_parser.models import Configuration, Label, AccountJournal, AccountAnalyticAccount, Transaction, OdooContact, \
-    QontoContact
+    QontoContact, AccountAccount
 import requests
 import re, uuid
 from django.contrib import messages
@@ -77,6 +77,16 @@ class refresh_qonto_contacts(View):
         qontoApi.get_all_contacts()
         messages.success(request, f"Contacts mis à jour. Total : {len(QontoContact.objects.all())}")
         return redirect('/admin/tiqo_parser/qontocontact')
+
+class refresh_account_account(View):
+
+        @method_decorator(login_required)
+        def get(self, request):
+            odooApi = OdooApi()
+            odooApi.get_account_account()
+            messages.success(request,
+                            f"Comptes de tiers Odoo mis à jour. Total : {len(AccountAccount.objects.all())}")
+            return redirect('/admin/tiqo_parser/label')
 
 class refresh_journal_account(View):
 
