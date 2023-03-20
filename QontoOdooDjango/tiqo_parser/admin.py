@@ -74,17 +74,17 @@ def action_create_draft_invoice(modeladmin, request, queryset):
     for transaction in queryset:
         transaction: Transaction
 
-        if not transaction.where_to_odoo():
+        if not transaction.odoo_article():
             messages.add_message(request, messages.ERROR,
                                  f"Transaction {transaction} : Pas d'article lié au tag Qonto. "
-                                 f"Merci de lier l'article la liste des labels Qonto")
+                                 f"Merci de lier l'article à l'un des labels Qonto")
         if not transaction.beneficiary or not transaction.initiator:
             messages.add_message(request, messages.ERROR,
                                  f"Transaction {transaction} : Pas de donneur d'ordre ou de bénéficiaire. "
                                  f"Merci de renseigner les champs dans la liste des transactions")
 
         if transaction.odoo_sended:
-            messages.add_message(request, messages.ERROR,
+            messages.add_message(request, messages.WARNING,
                                  f"Transaction {transaction} : Facture déjà envoyée à Odoo. Cela va créer un doublon ! (mais en brouillon ...) ")
             # return False
 
@@ -132,7 +132,7 @@ class TransactionsAdmin(admin.ModelAdmin):
         "as_attachment",
         "odoo_sended",
         "label_ids_string",
-        "where_to_odoo",
+        "odoo_article",
     )
 
     list_filter = (
@@ -140,6 +140,10 @@ class TransactionsAdmin(admin.ModelAdmin):
         "side",
         "initiator",
         "beneficiary",
+    )
+
+    search_fields = (
+        "label",
     )
     actions = [action_create_draft_invoice, ]
 

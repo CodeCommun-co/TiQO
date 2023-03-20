@@ -207,32 +207,29 @@ class Transaction(models.Model):
             return ", ".join([str(label) for label in self.label_ids.all()])
         return None
 
-    def where_to_odoo(self):
-        if self.label_ids.all().count() > 0:
-            first_label : Label = self.label_ids.first()
-            return first_label.is_valid()
-        else:
-            return None
 
     def odoo_article(self):
-        if self.where_to_odoo():
-            return self.label_ids.first().odoo_article
+        label_with_article = self.label_ids.filter(odoo_article__isnull=False)
+        if label_with_article.count() > 0:
+            first_label : Label = label_with_article.first()
+            if first_label.is_valid():
+                return first_label.odoo_article
         return None
 
     def odoo_analytic_account(self):
-        if self.where_to_odoo():
+        if self.odoo_article():
             if self.label_ids.first().odoo_analytic_account :
                 return self.label_ids.first().odoo_analytic_account.odoo_id
         return None
 
     def odoo_journal_account(self):
-        if self.where_to_odoo():
+        if self.odoo_article():
             if self.label_ids.first().odoo_journal_account:
                 return self.label_ids.first().odoo_journal_account.odoo_id
         return None
 
     def account_account_id(self):
-        if self.where_to_odoo():
+        if self.odoo_article():
             if self.label_ids.first().odoo_account_account:
                 return self.label_ids.first().odoo_account_account.odoo_id
         return None
