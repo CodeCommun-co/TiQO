@@ -157,7 +157,7 @@ class QontoApi():
 
                 db_attachement, created = Attachment.objects.get_or_create(
                     uuid=attachment['id'],
-                    filepath=full_path_file,
+                    # filepath=full_path_file,
                     url_qonto=url,
                     name=attachment['file_name'],
                 )

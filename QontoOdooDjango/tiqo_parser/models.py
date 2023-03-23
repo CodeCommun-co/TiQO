@@ -242,7 +242,7 @@ class Transaction(models.Model):
 class Attachment(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True, db_index=True)
     transactions = models.ManyToManyField(Transaction, related_name='attachments')
-    filepath = models.FilePathField(path=settings.MEDIA_ROOT, recursive=True, allow_folders=True, allow_files=True, blank=True, null=True)
+    # filepath = models.FilePathField(path=settings.MEDIA_ROOT, recursive=True, allow_folders=True, allow_files=True, blank=True, null=True)
     url_qonto = models.URLField()
     name = models.CharField(max_length=100)
 

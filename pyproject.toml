@@ -5,7 +5,7 @@ description = "App to connect Qonto and Odoo"
 authors = ["Jonas TURBEAUX"]
 license = "GPL3"
 readme = "README.md"
-packages = [{include = "qonto_to_odoo"}]
+#packages = [{include = "qonto_to_odoo"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"

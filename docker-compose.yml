@@ -1,0 +1,13 @@
+version: '3.7'
+services:
+  tiqo:
+    container_name: tiqo
+    hostname: tiqo
+    build: .
+    volumes:
+      - ./:/TiQO
+    working_dir: /TiQO/QontoOdooDjango
+    ports:
+      - 8005:8005
+    command: "poetry run bash launch.sh"
+#    command: "sleep 5d"

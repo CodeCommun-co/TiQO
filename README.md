@@ -13,6 +13,19 @@ curl -sSL https://install.python-poetry.org | python3 -
 
 ## Installation
 
+### Docker
+
+```shell
+# Build et run
+docker compose up -d
+# Create super user
+docker compose run tiqo poetry run ./manage.py createsuperuser
+```
+
+Go to http://localhost:8005/admin
+
+### From SCRATCH : 
+
 ```shell
 git clone git@github.com:CodeCommun-co/Qonto-to-Odoo
 cd Qonto-to-Odoo.git
