@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-uz2!bw2nfg8o7^05sr4)(r90xwto5qtb%#=q*n8_g&rv(^)bew
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['tiqo.codecommun.re','localhost']
+ALLOWED_HOSTS = ['https://tiqo.codecommun.re','tiqo.codecommun.re','localhost']
 
 
 # Application definition
