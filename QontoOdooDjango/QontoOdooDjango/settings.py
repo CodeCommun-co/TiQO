@@ -28,6 +28,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['https://tiqo.codecommun.re','tiqo.codecommun.re','localhost']
 
 CSRF_COOKIE_DOMAIN = ['https://tiqo.codecommun.re']
+CSRF_TRUSTED_ORIGINS = CSRF_COOKIE_DOMAIN
 
 # Application definition
 INSTALLED_APPS = [
