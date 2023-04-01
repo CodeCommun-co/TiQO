@@ -12,12 +12,16 @@ admin.site.site_header = 'TiQO : Qonto X Odoo - Administration'
 class ConfigurationAdmin(SingletonModelAdmin):
     def save_model(self, request, obj, form, change):
         obj: Configuration
-        odoo_api = OdooApi()
-        test_result = odoo_api.test_config()
-        if test_result == True:
-            messages.add_message(request, messages.INFO, f"Configuration ODOO {test_result}")
-        else:
-            messages.add_message(request, messages.ERROR, f"Odoo error : {test_result}")
+        try:
+            odoo_api = OdooApi()
+            test_result = odoo_api.test_config()
+            if test_result == True:
+                messages.add_message(request, messages.INFO, f"Configuration ODOO {test_result}")
+            else:
+                messages.add_message(request, messages.ERROR, f"Odoo error : {test_result}")
+        except Exception as e:
+            messages.add_message(request, messages.ERROR, f"Odoo error : {e}")
+
 
         super().save_model(request, obj, form, change)
 

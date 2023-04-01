@@ -29,8 +29,8 @@ class OdooApi():
         self.api_key = config.odoo_apikey
         self.url = config.odoo_url
         self.odoo_dbname = config.odoo_dbname
-        if not any([self.login, self.api_key, self.url, self.odoo_dbname]):
-            raise Exception("Bad Odoo credentials. Set its in the admin panel.")
+        # if not any([self.login, self.api_key, self.url, self.odoo_dbname]):
+        #     raise Exception("Bad Odoo credentials. Set its in the admin panel.")
 
         self.params: dict = {
             "db": f"{self.odoo_dbname}",
