@@ -7,7 +7,15 @@ services:
     volumes:
       - ./:/TiQO
     working_dir: /TiQO/QontoOdooDjango
-    ports:
-      - 8005:8005
+    # ports:
+      # - 8005:8005
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=frontend
+
+      - traefik.http.routers.test_machine.tls.certresolver=myresolver
+      - traefik.http.routers.test_machine.rule=Host(`$DOMAIN`)
+      - traefik.http.services.test_machine.loadbalancer.server.port=8884
+
     command: "poetry run bash launch.sh"
 #    command: "sleep 5d"
