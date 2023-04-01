@@ -26,7 +26,7 @@ class ConfigurationAdmin(SingletonModelAdmin):
         super().save_model(request, obj, form, change)
 
 
-admin.site.register(Configuration, ConfigurationAdmin)
+# admin.site.register(Configuration, ConfigurationAdmin)
 
 
 # class IbanAdmin(admin.ModelAdmin):
