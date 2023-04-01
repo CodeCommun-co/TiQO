@@ -17,5 +17,5 @@ services:
       - traefik.http.routers.test_machine.rule=Host(`$DOMAIN`)
       - traefik.http.services.test_machine.loadbalancer.server.port=8005
 
-    command: "poetry run bash launch.sh"
-#    command: "sleep 5d"
+    # command: "poetry run bash launch.sh"
+   command: "sleep 5d"
