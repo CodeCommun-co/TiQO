@@ -13,6 +13,6 @@ urlpatterns = [
     path('action/refresh_analytic_account', refresh_analytic_account.as_view(), name='refresh_analytic_account'),
     path('action/refresh_journal_account', refresh_journal_account.as_view(), name='refresh_journal_account'),
     path('action/refresh_account_account', refresh_account_account.as_view(), name='refresh_account_account'),
-    path('admin/', admin.site.urls),
-    path('', index.as_view(), name='index'),
+    # path('admin/', admin.site.urls),
+    # path('', admin.site.urls, name='index'),
 ]
