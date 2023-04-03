@@ -26,9 +26,9 @@ SECRET_KEY = 'django-insecure-uz2!bw2nfg8o7^05sr4)(r90xwto5qtb%#=q*n8_g&rv(^)bew
 # DEBUG = True
 DEBUG = False
 
-ALLOWED_HOSTS = ['https://tiqo.codecommun.re','tiqo.codecommun.re','localhost']
+ALLOWED_HOSTS = ['https://tiqo.codecommun.re','https://tiqo.codecommun.re/', 'tiqo.codecommun.re','localhost']
 
-CSRF_COOKIE_DOMAIN = ['https://tiqo.codecommun.re']
+CSRF_COOKIE_DOMAIN = ALLOWED_HOSTS
 CSRF_TRUSTED_ORIGINS = CSRF_COOKIE_DOMAIN
 
 # Application definition
