@@ -27,9 +27,8 @@ DEBUG = True
 # DEBUG = False
 
 ALLOWED_HOSTS = ['https://tiqo.codecommun.re','https://tiqo.codecommun.re/', 'tiqo.codecommun.re','localhost']
-
-CSRF_COOKIE_DOMAIN = ['https://tiqo.codecommun.re','https://tiqo.codecommun.re/']
-CSRF_TRUSTED_ORIGINS = CSRF_COOKIE_DOMAIN
+CSRF_TRUSTED_ORIGINS = ['https://tiqo.codecommun.re']
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Application definition
 INSTALLED_APPS = [
