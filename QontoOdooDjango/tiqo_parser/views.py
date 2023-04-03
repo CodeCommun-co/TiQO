@@ -157,8 +157,8 @@ class index(View):
         }
         return render(request, 'index.html', context=context)
 
-
-class material(View):
-    @method_decorator(login_required)
-    def get(self, request):
-        return render(request, 'material.html')
+#
+# class material(View):
+#     @method_decorator(login_required)
+#     def get(self, request):
+#         return render(request, 'material.html')
