@@ -50,12 +50,12 @@ class LabelADmin(admin.ModelAdmin):
         'odoo_account_account',
     )
 
-    list_editable = (
-        'odoo_article',
-        'odoo_analytic_account',
-        'odoo_journal_account',
-        'odoo_account_account',
-    )
+    # list_editable = (
+    #     'odoo_article',
+    #     'odoo_analytic_account',
+    #     'odoo_journal_account',
+    #     'odoo_account_account',
+    # )
 
     ordering = ('parent__name', 'name')
 
@@ -197,7 +197,9 @@ class QontoContactAdmin(admin.ModelAdmin):
         "odoo_contact",
     )
     ordering = ('first_name',)
-    list_editable = ("email", "odoo_contact",)
+
+    # list_editable = ("email", "odoo_contact",)
+
     actions = [button_action_create_odoo_contact, ]
 
     def has_delete_permission(self, request, obj=None):
