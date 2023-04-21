@@ -178,9 +178,11 @@ class OdooApi():
         beneficiary = transaction.beneficiary.odoo_contact
         initiator = transaction.initiator.odoo_contact
         attachments = transaction.attachments.all()
+
         list_attachments = None
         if attachments.count() > 0:
             list_attachments = [(attachment.name, attachment.url_qonto) for attachment in attachments]
+
 
         # On ajoute les infos de membre au post DATA
         postdata = {}

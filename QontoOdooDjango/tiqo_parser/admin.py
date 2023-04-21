@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from solo.admin import SingletonModelAdmin
 from .models import Configuration, AccountJournal, Category, Label, QontoContact, Transaction, Iban, Attachment, \
-    OdooArticles, AccountAnalyticAccount
+    OdooArticles, AccountAnalyticAccount, OdooContact
 from .odoo_api import OdooApi
 from .qonto_api import QontoApi
 
@@ -104,7 +104,9 @@ def action_create_draft_invoice(modeladmin, request, queryset):
 
                 article: OdooArticles = transaction.odoo_article()
                 compte_analytique: AccountAnalyticAccount = transaction.odoo_analytic_account()
+                print(f"compte_analytique : {compte_analytique}")
                 journal: AccountJournal = transaction.odoo_journal_account()
+                print(f"odoo_journal_account : {journal}")
                 beneficiary = transaction.beneficiary.odoo_contact.id_odoo
                 initiator = transaction.initiator.odoo_contact.id_odoo
 
@@ -134,16 +136,15 @@ class TransactionsAdmin(admin.ModelAdmin):
         "initiator",
         "beneficiary",
         "as_attachment",
-        "odoo_sended",
-        "label_ids_string",
+        "labels_qonto",
         "odoo_article",
+        "odoo_sended",
     )
 
     list_filter = (
-        "iban",
         "side",
-        "initiator",
-        "beneficiary",
+        "odoo_sended",
+        "label_ids",
     )
 
     search_fields = (
@@ -183,6 +184,31 @@ def button_action_create_odoo_contact(modeladmin, request, queryset):
 
 button_action_create_odoo_contact.short_description = "Envoyer vers Odoo"
 
+class OdooContactAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "email",
+    )
+
+    search_fields = (
+        "email",
+        "name",
+    )
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        return True
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+admin.site.register(OdooContact, OdooContactAdmin)
+
 
 class QontoContactAdmin(admin.ModelAdmin):
     change_list_template = 'custom_admin/qontocontact_changelist.html'
@@ -194,11 +220,12 @@ class QontoContactAdmin(admin.ModelAdmin):
     )
     list_filter = (
         "type",
-        "odoo_contact",
     )
     ordering = ('first_name',)
 
+    search_fields = ("first_name", "last_name", "email")
     # list_editable = ("email", "odoo_contact",)
+    autocomplete_fields = ['odoo_contact']
 
     actions = [button_action_create_odoo_contact, ]
 

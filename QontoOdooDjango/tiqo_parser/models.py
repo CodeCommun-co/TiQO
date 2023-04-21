@@ -1,10 +1,13 @@
+import logging
+
 import uuid
 from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from solo.models import SingletonModel
-
+import logging
+logger = logging.getLogger(__name__)
 
 # Create your models here.
 
@@ -193,7 +196,7 @@ class Transaction(models.Model):
                                     verbose_name="Bénéficiaire")
     reference = models.TextField(null=True, blank=True)
 
-    odoo_sended = models.BooleanField(default=False)
+    odoo_sended = models.BooleanField(default=False, verbose_name="Envoyé à Odoo")
     odoo_invoice_id = models.IntegerField(null=True, blank=True)
 
     def as_attachment(self):
@@ -202,37 +205,49 @@ class Transaction(models.Model):
         return False
     as_attachment.boolean = True
 
-    def label_ids_string(self):
+    def labels_qonto(self):
         if self.label_ids.all().count() > 0:
             return ", ".join([str(label) for label in self.label_ids.all()])
         return None
+    labels_qonto.verbose_name = "Labels"
 
-
-    def odoo_article(self):
+    def label_with_article(self):
         label_with_article = self.label_ids.filter(odoo_article__isnull=False)
         if label_with_article.count() > 0:
-            first_label : Label = label_with_article.first()
-            if first_label.is_valid():
-                return first_label.odoo_article
+            return label_with_article.first()
+        return None
+
+    def odoo_article(self):
+        label_with_article = self.label_with_article()
+        if label_with_article:
+            return label_with_article.odoo_article
         return None
 
     def odoo_analytic_account(self):
-        if self.odoo_article():
-            if self.label_ids.first().odoo_analytic_account :
-                return self.label_ids.first().odoo_analytic_account.odoo_id
+        label_with_article = self.label_with_article()
+        if label_with_article:
+            if label_with_article.odoo_analytic_account:
+                print(f"ANALYTIC ACCOUNT : {label_with_article.odoo_analytic_account.name}")
+                return label_with_article.odoo_analytic_account.id_odoo
         return None
 
     def odoo_journal_account(self):
-        if self.odoo_article():
-            if self.label_ids.first().odoo_journal_account:
-                return self.label_ids.first().odoo_journal_account.odoo_id
+        label_with_article = self.label_with_article()
+        if label_with_article:
+            if label_with_article.odoo_journal_account:
+                print(f"JOURNAL ACCOUNT : {label_with_article.odoo_journal_account.name}")
+                return label_with_article.odoo_journal_account.id_odoo
         return None
 
     def account_account_id(self):
-        if self.odoo_article():
-            if self.label_ids.first().odoo_account_account:
-                return self.label_ids.first().odoo_account_account.odoo_id
+        label_with_article = self.label_with_article()
+        if label_with_article:
+            if label_with_article.odoo_account_account:
+                print(f"ACCOUNT ACCOUNT : {label_with_article.odoo_account_account.name}")
+                return label_with_article.odoo_account_account.id_odoo
         return None
+
+
 
     class Meta:
         verbose_name = 'Transaction Qonto'
