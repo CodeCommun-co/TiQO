@@ -214,9 +214,9 @@ class QontoContactAdmin(admin.ModelAdmin):
     change_list_template = 'custom_admin/qontocontact_changelist.html'
     list_display = (
         "name",
+        "odoo_contact",
         "email",
         "type",
-        "odoo_contact",
     )
     list_filter = (
         "type",
