@@ -60,7 +60,6 @@ class refresh_qonto_transactions(View):
 
 
 class refresh_odoo_contacts(View):
-
     @method_decorator(login_required)
     def get(self, request):
         odooApi = OdooApi()
