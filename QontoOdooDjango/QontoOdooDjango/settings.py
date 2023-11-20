@@ -27,7 +27,7 @@ DEBUG = True
 # DEBUG = False
 
 ALLOWED_HOSTS = ['https://tiqo.small.codecommun.co','tiqo.small.codecommun.co', 'localhost']
-CSRF_TRUSTED_ORIGINS = ['https://tiqo.small.codecommun.co','tiqo.small.codecommun.co']
+CSRF_TRUSTED_ORIGINS = ['https://tiqo.small.codecommun.co']
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Application definition
