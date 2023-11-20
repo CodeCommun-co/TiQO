@@ -208,7 +208,7 @@ class OdooApi():
         }, cls=DecimalEncoder)
 
         session = requests.session()
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
         response = session.post(url, data=data, headers=headers)
         session.close()
         resp_json = response.json()
