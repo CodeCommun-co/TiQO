@@ -210,8 +210,8 @@ class OdooApi():
         session = requests.session()
         response = session.post(url, data=data, headers=headers)
         session.close()
+        resp_json = response.json()
         if response.status_code == 200:
-            resp_json = response.json()
             print(resp_json)
             if resp_json.get('result'):
                 invoice_draft_id = resp_json.get('result').get('invoice_draft_id')
@@ -221,7 +221,7 @@ class OdooApi():
                     transaction.save()
                     return resp_json
 
-        return response
+        return resp_json
 
     def get_account_account(self):
         # Cherche tous les contacts de Odoo et les renseigne dans la DB
