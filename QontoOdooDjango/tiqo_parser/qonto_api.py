@@ -51,20 +51,26 @@ class QontoApi():
         memberships_response_dict = self._get_request_api("memberships")
         members = memberships_response_dict.get('memberships')
         for member in members:
-            QontoContact.objects.get_or_create(
-                uuid=member.get('id'),
-                last_name=member.get('last_name'),
-                first_name=member.get('first_name'),
-                type="M",
-            )
+            try :
+                QontoContact.objects.get(uuid=member.get('id'))
+            except QontoContact.DoesNotExist:
+                QontoContact.objects.create(
+                    uuid=member.get('id'),
+                    last_name=member.get('last_name'),
+                    first_name=member.get('first_name'),
+                    type="M",
+                )
 
         beneficiaries_response_dict = self._get_request_api("beneficiaries")
         for beneficiary in beneficiaries_response_dict.get('beneficiaries'):
-            QontoContact.objects.get_or_create(
-                uuid=beneficiary.get('id'),
-                last_name=beneficiary.get('name'),
-                type="B",
-            )
+            try:
+                QontoContact.objects.get(uuid=beneficiary.get('id'))
+            except QontoContact.DoesNotExist:
+                QontoContact.objects.create(
+                    uuid=beneficiary.get('id'),
+                    last_name=beneficiary.get('name'),
+                    type="B",
+                )
         return QontoContact.objects.all()
 
     def get_all_external_transfers(self):
