@@ -26,8 +26,8 @@ SECRET_KEY = 'django-insecure-uz2!bw2nfg8o7^05sr4)(r90xwto5qtb%#=q*n8_g&rv(^)bew
 DEBUG = True
 # DEBUG = False
 
-ALLOWED_HOSTS = ['https://tiqo.small.codecommun.co','localhost']
-CSRF_TRUSTED_ORIGINS = ['https://tiqo.small.codecommun.co']
+ALLOWED_HOSTS = ['https://tiqo.small.codecommun.co','tiqo.small.codecommun.co', 'localhost']
+CSRF_TRUSTED_ORIGINS = ['https://tiqo.small.codecommun.co','tiqo.small.codecommun.co']
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Application definition
