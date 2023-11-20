@@ -126,6 +126,7 @@ def action_create_draft_invoice(modeladmin, request, queryset):
                         messages.add_message(request, messages.INFO, f"{response}")
                 else:
                     logger.error(f"Erreur lors de la création de la facture : {response}")
+                    print(f"Erreur lors de la création de la facture : {response}")
                     messages.add_message(request, messages.ERROR, f"{response}")
 
 
