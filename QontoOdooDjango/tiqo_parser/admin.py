@@ -4,6 +4,10 @@ from .models import Configuration, AccountJournal, Category, Label, QontoContact
     OdooArticles, AccountAnalyticAccount, OdooContact
 from .odoo_api import OdooApi
 from .qonto_api import QontoApi
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 admin.site.site_header = 'TiQO : Qonto X Odoo - Administration'
 
@@ -121,6 +125,7 @@ def action_create_draft_invoice(modeladmin, request, queryset):
                     if response.get('result').get('status'):
                         messages.add_message(request, messages.INFO, f"{response}")
                 else:
+                    logger.error(f"Erreur lors de la création de la facture : {response}")
                     messages.add_message(request, messages.ERROR, f"{response}")
 
 
