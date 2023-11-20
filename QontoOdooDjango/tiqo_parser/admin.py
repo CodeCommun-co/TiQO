@@ -118,7 +118,7 @@ def action_create_draft_invoice(modeladmin, request, queryset):
                 for attachment in transaction.attachments.all():
                     attachment = qonto_api.download_or_update_attachment(attachment.uuid, transaction)
 
-                messages.add_message(request, messages.WARNING, f"{transaction.__dict__}")
+                # messages.add_message(request, messages.WARNING, f"{transaction.__dict__}")
                 response = odoo_api.create_draft_invoice(transaction)
 
                 if response.get('result'):

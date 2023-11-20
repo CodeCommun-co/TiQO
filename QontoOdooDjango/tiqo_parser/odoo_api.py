@@ -200,6 +200,7 @@ class OdooApi():
             'attachments': list_attachments,
         }
         logger.info(postdata)
+        import ipdb; ipdb.set_trace()
         url = f"{self.url}tibillet-api/xmlrpc/tiqo_create_draft_invoice"
         headers = { 'content-type': 'application/json' }
         postdata.update(self.params)
